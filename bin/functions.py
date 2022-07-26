@@ -2,37 +2,48 @@
 #for testing random things
 
 from math import sqrt
+from geometry_msgs.msg import PointStamped
 import rospy
 import applevision_motion
 import tf
 from tf.listener import TransformListener
+import moveit_commander
+import sys
+from geometry_msgs.msg import Pose, PoseStamped
+from moveit_msgs.msg import RobotTrajectory, Grasp, PlaceLocation, Constraints
+from sensor_msgs.msg import JointState
+import rospy
+import tf
+from moveit_ros_planning_interface import _moveit_move_group_interface
+from exception import MoveItCommanderException
 
-# copy pasta from somewhere... but I dont know where
-# gets position of palm
-# getpose() only works when it's not running in a loop with the approach and stuff...
+#all the code initiates some sort of node ?
 def getpose():
     #rospy.init_node('applevision_motion')
-    broadcaster = tf.TransformBroadcaster()
-    now = rospy.Time.now()
-    sbr = tf.TransformBroadcaster()
+    # now = rospy.Time.now()
     R = rospy.Rate(150)
     # while not rospy.is_shutdown():
-    broadcaster.sendTransform((1, 1, 1), (0, 0, 0, 1), rospy.Time(), '/world','/palm')      
+    broadcaster = tf.TransformBroadcaster()
+    #broadcaster.sendTransform((1, 1, 1), (0, 0, 0, 1), rospy.Time(), '/world','/palm')      
     R.sleep()
 
     listener = tf.TransformListener()
-    now = rospy.Time.now()
+    #now = rospy.Time.now()
     listener.waitForTransform('/world','/palm',rospy.Time(), rospy.Duration(4.0))
     (trans, rot) = listener.lookupTransform('/world', '/palm', rospy.Time(0))
-    return(trans)
+    return (trans)
 
-# calculating distance between apple and endeffector
+#.0832949 (apple height)
+#things measured in meters
+
+# calculating distance between apple and endeffector (this needs getpose())
 # takes two arrays ([x,y,z]) for positions of apple and endeffector 
 def nearby(real, apple):
+    print("real:" + str(real))
+    print("apple:" + str(apple))
     dstance = sqrt((abs(real[0]-apple[0]))**2+(abs(real[1]-apple[1]))**2+(abs(real[2]-apple[2]))**2)
     heightdiff = abs(real[2]-apple[2])
+    print(dstance)
     # for now these are arbitrary numbers... will need to check what is acceptable
-    if dstance < .3 and heightdiff <.05:
+    if dstance < .15 and heightdiff <.05:
         return True
-    
-#_________________________________________________________________

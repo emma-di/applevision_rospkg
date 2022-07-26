@@ -1,0 +1,1 @@
+class MoveItCommanderException(Exception): pass
