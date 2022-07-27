@@ -17,7 +17,7 @@ import tf
 from moveit_ros_planning_interface import _moveit_move_group_interface
 from exception import MoveItCommanderException
 
-#all the code initiates some sort of node ?
+# not used anymore... did waitForTransform directly in dontdie.py instead
 def getpose():
     #rospy.init_node('applevision_motion')
     # now = rospy.Time.now()
@@ -39,12 +39,9 @@ def getpose():
 # calculating distance between apple and endeffector (this needs getpose())
 # takes two arrays ([x,y,z]) for positions of apple and endeffector 
 def nearby(real, apple):
-    #print("real:" + str(real))
-    #print("apple:" + str(apple))
     # calculates distance and height difference
     dstance = sqrt((abs(real[0]-apple[0]))**2+(abs(real[1]-apple[1]))**2+(abs(real[2]-apple[2]))**2)
     heightdiff = abs(real[2]-apple[2])
-    #print(dstance)
     # check is distance is height difference is acceptable
     if dstance < .15 and heightdiff <.05:
         return True

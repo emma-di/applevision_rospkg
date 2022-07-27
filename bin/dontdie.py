@@ -5,7 +5,7 @@
 
 # Before starting: have rviz & simulated camera open
     # roslaunch applevision_moveit_config demo.launch
-    # roslaunch applevision_rospkg fake_sensor.launch
+    # roslaunch applevision_rospkg fake_sensor.launch (has been condensed with demo.launch -- you don't need to run this)
 
 # To (hopefully) run this:
     # src/applevision_rospkg/bin/dontdie.py

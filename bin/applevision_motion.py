@@ -368,9 +368,7 @@ def main():
     min_tick = SynchronizerMinTick(
         [kal, camera, dist], queue_size=20, slop=SYNC_SLOP, min_tick=SYNC_TICK)
     min_tick.registerCallback(approach.tick_callback)
-    
-    
-    
+ 
     rospy.spin()
         
     
