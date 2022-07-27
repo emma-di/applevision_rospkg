@@ -39,11 +39,12 @@ def getpose():
 # calculating distance between apple and endeffector (this needs getpose())
 # takes two arrays ([x,y,z]) for positions of apple and endeffector 
 def nearby(real, apple):
-    print("real:" + str(real))
-    print("apple:" + str(apple))
+    #print("real:" + str(real))
+    #print("apple:" + str(apple))
+    # calculates distance and height difference
     dstance = sqrt((abs(real[0]-apple[0]))**2+(abs(real[1]-apple[1]))**2+(abs(real[2]-apple[2]))**2)
     heightdiff = abs(real[2]-apple[2])
-    print(dstance)
-    # for now these are arbitrary numbers... will need to check what is acceptable
+    #print(dstance)
+    # check is distance is height difference is acceptable
     if dstance < .15 and heightdiff <.05:
         return True
