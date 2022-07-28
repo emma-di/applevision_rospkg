@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 #from typing import Optional (removed for python2)
-from enum import Enum#, auto
+from enum import Enum #, auto
 from itertools import count
 def auto(it=count()):
     return it.next()
@@ -100,8 +100,6 @@ class MotionPlanner():
             c1.joint_constraints[i].tolerance_below = tolerance
             c1.joint_constraints[i].weight = 1.0
         g.request.goal_constraints.append(c1)
-        
-        #print("I AM HERE")
 
         # 4. fill in path constraints
 
@@ -151,20 +149,16 @@ class MotionPlanner():
         # 12. fill in other planning options
         g.planning_options.look_around = False
         g.planning_options.replan = False
-        
-        #print("AND HERE")
 
         # 13. send goal
         self._action.send_goal(g)
         if wait:
             self._action.wait_for_result()
             return self._action.get_result()
-            #print("MAYBE NOT HERE?")
         else:
             return None
     
     def start_move_to_pose(self, coords, tolerance):
-        #print(coords)
         self.move_group_action.cancel_all_goals()
 
         # Translated from https://github.com/mikeferguson/moveit_python/blob/ros1/src/moveit_python/move_group_interface.py
@@ -180,8 +174,6 @@ class MotionPlanner():
         except ServiceProxyFailed as e:
             raise RuntimeError('TF2 service proxy failed') #from e
         transformed_pose = transformed_response.transformed
-
-        #print(transformed_pose)
         
         g = MoveGroupGoal()
         g.request.start_state.is_diff = True
@@ -253,7 +245,6 @@ class AppleApproach():
         }
 
     def die(self, msg):
-        #print("dying")
         self.planner.stop()
         rospy.logfatal('{}'.format(msg)) #{LOG_PREFIX}{msg}')
         with self.lock:
@@ -261,7 +252,6 @@ class AppleApproach():
         #rospy.signal_shutdown('Death')
 
     def tick_callback(self, kal, cam, dist): #: Optional[PointWithCovarianceStamped], cam: Optional[RegionOfInterestWithConfidenceStamped], dist: Optional[Range]):
-        #print("tick callback")
         if self.running_lock.locked():
             return
         try:
@@ -289,7 +279,6 @@ class AppleApproach():
             self.die('Caught exception {}:\n{}'.format(e, traceback.format_exc()))
 
     def idle_callback(self, kal, cam, dist): #Optional[PointWithCovarianceStamped], cam: Optional[RegionOfInterestWithConfidenceStamped], dist: Optional[Range]):
-        #print("idle callback running")
         if not kal or not cam:
             return None
 
@@ -316,7 +305,6 @@ class AppleApproach():
             return (AppleApproach.State.APPROACH_IN_MOTION, 'apple is centered: {}, {}, approaching quickly: {}'.format(kal.point[0], kal.point[1], kal.covariance[8]))
 
     def center_in_motion_callback(self, *_):
-        #print("center in motion running")
         if self.planner.is_in_motion():
             return None
 
@@ -329,7 +317,6 @@ class AppleApproach():
         return (AppleApproach.State.IDLE, 'done centering'.format())
 
     def approach_in_motion_callback(self, kal, cam, dist): #Optional[PointWithCovarianceStamped], cam: Optional[RegionOfInterestWithConfidenceStamped], dist: Optional[Range]):
-        #("approach in motion running")
         # sanity check: if the distance sensor reads under a certain value emergency stop
         if dist and dist.range < AppleApproach.ESTOP_DIST_Z:
             self.die('Detected obstruction at {}'.format(dist.range))

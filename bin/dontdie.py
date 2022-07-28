@@ -19,7 +19,7 @@ import actionlib
 from message_filters import Subscriber
 from sensor_msgs.msg import Range
 from applevision_rospkg.msg import RegionOfInterestWithConfidenceStamped, PointWithCovarianceStamped
-from helpers import RobustServiceProxy, ServiceProxyFailed, SynchronizerMinTick
+from helpers import SynchronizerMinTick
 
 def auto(it=count()):
     return it.next()
@@ -32,7 +32,7 @@ Logger.setLevel(logging.DEBUG)
 
 rospy.init_node('applevision_motion')
 
-# initial joint positions
+# initial joint positions (for minimal planning problems)
 joints = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 initial = [-3.79, -2.09, 2.15, -.052, .92, 3.87]
 # apple coords
@@ -64,11 +64,14 @@ def move_to_home():
 # executes apple approach (from applevision_motion)
 def apple_approach():
     global min_tick
+    # reset min_tick (multithreading- SynchronizerMinTick never goes away)
     min_tick.callbacks = {}
+    # do the approach
     min_tick.registerCallback(approach.tick_callback)
     # checks if process is done
     while True:
         rospy.sleep(1)
+        # a small problem: sometimes it takes too long to terminate & starts running again too early
         if approach.is_done() == True:
             break
 
@@ -87,10 +90,11 @@ for x in range(int(input("Run how many times? "))):
     # approach the apple
     apple_approach()
     
+    # stop everything
     #rospy.sleep(2)
     planner.stop()
-    #rospy.sleep(2)
-    status = approach.planner.move_group_action.get_state()
+    rospy.sleep(5)
+    #status = approach.planner.move_group_action.get_state()
     #print("Attempt number " + str(x+1) + ": Status " + str(status))
     #rospy.sleep(2)
     
