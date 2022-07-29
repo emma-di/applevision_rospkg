@@ -259,7 +259,6 @@ class AppleApproach():
                 if kal:
                     # TODO: this is hacky
                     kal.point = (kal.point[0], kal.point[1] + self.PALM_DIST_OFF_Y, kal.point[2])
-
                 if self.state == AppleApproach.State.DONE:
                     rospy.loginfo(' Approach complete! Terminating...'.format()) #{LOG_PREFIX} Approach complete! Terminating...')
                     rospy.sleep(5)

@@ -10,6 +10,7 @@
 # To (hopefully) run this:
     # src/applevision_rospkg/bin/dontdie.py
 
+from random import randint
 from applevision_motion import MotionPlanner, AppleApproach
 from itertools import count
 import rospy
@@ -38,8 +39,13 @@ initial = [-3.79, -2.09, 2.15, -.052, .92, 3.87]
 # apple coords
 apple = [-.51, -.16, 1.3]
 
+# if you want to get fancy, make a list of trials + results and log to a csv
+# how to do with docker :(
+# trials = []
+Results = []
+Angles = []
 
-# setup for frame transformations (getting coords)
+# setup for frame transformations (for getting coords)
 listener = tf.TransformListener()
 
 # setup for the apple approach and motion (from applevision_motion)
@@ -50,11 +56,6 @@ dist = Subscriber('applevision/apple_dist', Range, queue_size=10)
 kal = Subscriber('applevision/est_apple_pos', PointWithCovarianceStamped, queue_size=10)
 min_tick = SynchronizerMinTick(
     [kal, camera, dist], queue_size=20, slop=SYNC_SLOP, min_tick=SYNC_TICK)
-
-# if you want to get fancy, make a list of trials + results and log to a csv
-# how to do with docker :(
-# trials = []
-results = []
 
 # go to home position 
 # takes two parameters: list of joint names, list of joint positions
@@ -67,7 +68,7 @@ def apple_approach():
     # reset min_tick (multithreading- SynchronizerMinTick never goes away)
     min_tick.callbacks = {}
     # do the approach
-    min_tick.registerCallback(approach.tick_callback)
+    min_tick.registerCallback(approach.tick_callback)    
     # checks if process is done
     while True:
         rospy.sleep(1)
@@ -106,10 +107,33 @@ for x in range(int(input("Run how many times? "))):
     if functions.nearby(trans, apple) == True:
         result = "success"
     
+    # REPLACE THESE WITH THE ACTUAL THINGS AHKJASFHLKJASH
+    #
+    #
+    #
+    #
+    
+    # apple vector in palm camera frame
+    apple_vector = [randint(5,20), 0, 0]
+    # direction that palm faces (CAN BE MOVED OUT OF LOOP)
+    palm_vector = [randint(5,20), 0, 0]
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     # log results
     x+=1
     print("Number " + str(x) + " was a " + result)
-    results.append(result)
+    Results.append(result)
+    Angles.append(functions.angle_success(apple_vector, palm_vector))
     
-print(results)
-functions.get_success(results)
+print(Results)
+functions.get_success(Results)
+functions.get_success(Angles)
