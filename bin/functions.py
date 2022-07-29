@@ -45,3 +45,12 @@ def nearby(real, apple):
     # check is distance is height difference is acceptable
     if dstance < .15 and heightdiff <.05:
         return True
+
+def get_success(results):
+    successes = 0
+    for result in results:
+        if result == "success":
+            successes += 1
+    x = (len(results))
+    percent = round((successes/float(x))*100, 2)
+    print(str(percent) + " percent success")

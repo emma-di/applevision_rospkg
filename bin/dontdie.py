@@ -74,7 +74,7 @@ def apple_approach():
         # a small problem: sometimes it takes too long to terminate & starts running again too early
         if approach.is_done() == True:
             break
-
+            
 # loops through given number of times
 for x in range(int(input("Run how many times? "))):
     # reset
@@ -110,5 +110,6 @@ for x in range(int(input("Run how many times? "))):
     x+=1
     print("Number " + str(x) + " was a " + result)
     results.append(result)
-
+    
 print(results)
+functions.get_success(results)
