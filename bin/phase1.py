@@ -9,18 +9,19 @@
 
 # To (hopefully) run this:
     # src/applevision_rospkg/bin/dontdie.py
-
-from random import randint
+    
 from applevision_motion import MotionPlanner, AppleApproach
 from itertools import count
 import rospy
 import functions
 import tf
-import actionlib
+import time
+import numpy as np
 from message_filters import Subscriber
 from sensor_msgs.msg import Range
 from applevision_rospkg.msg import RegionOfInterestWithConfidenceStamped, PointWithCovarianceStamped
 from helpers import SynchronizerMinTick
+from scipy.spatial.transform import Rotation as R
 
 def auto(it=count()):
     return it.next()
@@ -44,6 +45,7 @@ apple = [-.51, -.16, 1.3]
 # trials = []
 Results = []
 Angles = []
+Approach_Times = []
 
 # setup for frame transformations (for getting coords)
 listener = tf.TransformListener()
@@ -72,9 +74,10 @@ def apple_approach():
     # checks if process is done
     while True:
         rospy.sleep(1)
+        is_done, kal = approach.is_done()
         # a small problem: sometimes it takes too long to terminate & starts running again too early
-        if approach.is_done() == True:
-            break
+        if is_done:
+            return kal
             
 # loops through given number of times
 for x in range(int(input("Run how many times? "))):
@@ -87,21 +90,23 @@ for x in range(int(input("Run how many times? "))):
     
     # go to home position
     move_to_home()
-    
-    # approach the apple
-    apple_approach()
+
+    # approach the apple (and log how long it takes)
+    start = time.time()
+    kal = apple_approach()
+    end = time.time()
+    approach_time = round(end-start,2)
+    Approach_Times.append(approach_time)
     
     # stop everything
-    #rospy.sleep(2)
     planner.stop()
     rospy.sleep(5)
-    #status = approach.planner.move_group_action.get_state()
-    #print("Attempt number " + str(x+1) + ": Status " + str(status))
-    #rospy.sleep(2)
     
     # check final position using transform frames
     listener.waitForTransform('/world','/palm',rospy.Time(), rospy.Duration(4.0))
     (trans, rot) = listener.lookupTransform('/world', '/palm', rospy.Time(0))
+    print(rot)
+    r = R.from_quat(rot)
 
     # determine success (is palm close enough to apple?)
     if functions.nearby(trans, apple) == True:
@@ -112,13 +117,15 @@ for x in range(int(input("Run how many times? "))):
     #
     #
     #
-    
     # apple vector in palm camera frame
-    apple_vector = [randint(5,20), 0, 0]
+    apple_array = np.array(apple)
+    trans_array = np.array(trans)
+    print(apple_array)
+    print(trans_array)
+    apple_vector = r.apply(trans_array-apple_array)
+    print("this is the apple" + str(apple_vector))
     # direction that palm faces (CAN BE MOVED OUT OF LOOP)
-    palm_vector = [randint(5,20), 0, 0]
-    
-    
+    palm_vector = [0,0,.1]
     
     
     
@@ -135,5 +142,6 @@ for x in range(int(input("Run how many times? "))):
     Angles.append(functions.angle_success(apple_vector, palm_vector))
     
 print(Results)
-functions.get_success(Results)
-functions.get_success(Angles)
+print("Results success: " + str(functions.get_success(Results)))
+print("Angles success: " + str(functions.get_success(Angles)))
+print(Approach_Times)

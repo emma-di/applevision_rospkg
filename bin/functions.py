@@ -46,17 +46,13 @@ def nearby(real, apple):
     if dstance < .15 and heightdiff <.05:
         return True
 
-def get_success(results):
-    #TODO: PARAMETER NAMES
-    list_name = [ k for k,v in locals().iteritems() if v == results][0]
-    
+def get_success(results):    
     successes = 0
     for result in results:
         if result in ["success", True]:
             successes += 1
     x = (len(results))
-    percent = round((successes/float(x))*100, 2)
-    print(str(list_name) + " success: " + str(percent) + " percent")
+    return (str(round((successes/float(x))*100, 2)) + "percent")
 
 # computes the magnitude of a vector    
 def magnitude(vector):
@@ -66,6 +62,7 @@ def magnitude(vector):
 def angle_success(v1, v2):
     dotproduct = float(v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2])
     angle = degrees(acos(dotproduct/(magnitude(v1)*magnitude(v2))))
+    print(angle)
     if angle <= 5:
         return True
     else:

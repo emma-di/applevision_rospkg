@@ -222,7 +222,7 @@ class AppleApproach():
     STEP_DIST_Z = 0.05
     STOP_DIST_Z = 0.10
     ESTOP_DIST_Z = 0.06
-    PALM_DIST_OFF_Y = -0.017 # TODO: fix from URDF
+    PALM_DIST_OFF_Y = 0 #-0.017 # TODO: fix from URDF
 
     class State(Enum):
         IDLE = auto()
@@ -237,6 +237,7 @@ class AppleApproach():
         self.running_lock = Lock()
         self.lock = Lock()
         self.done = False
+        self.kal = []
 
         self._state_cb_table = {
             AppleApproach.State.IDLE: self.idle_callback,
@@ -259,6 +260,8 @@ class AppleApproach():
                 if kal:
                     # TODO: this is hacky
                     kal.point = (kal.point[0], kal.point[1] + self.PALM_DIST_OFF_Y, kal.point[2])
+                    if type(kal) == PointWithCovarianceStamped:
+                        self.kal = kal
                 if self.state == AppleApproach.State.DONE:
                     rospy.loginfo(' Approach complete! Terminating...'.format()) #{LOG_PREFIX} Approach complete! Terminating...')
                     rospy.sleep(5)
@@ -280,7 +283,8 @@ class AppleApproach():
     def idle_callback(self, kal, cam, dist): #Optional[PointWithCovarianceStamped], cam: Optional[RegionOfInterestWithConfidenceStamped], dist: Optional[Range]):
         if not kal or not cam:
             return None
-
+        if type(kal) == PointWithCovarianceStamped:
+            self.kal = kal
         # If the camera is still useful according to the kalman filter and we need centering
         if kal.point[2] >= AppleApproach.CAMERA_DEAD_THRESH_Z \
             and (abs(kal.point[0]) > AppleApproach.CENTER_THRESH_XY or abs(kal.point[1]) > AppleApproach.CENTER_THRESH_XY):
@@ -316,6 +320,8 @@ class AppleApproach():
         return (AppleApproach.State.IDLE, 'done centering'.format())
 
     def approach_in_motion_callback(self, kal, cam, dist): #Optional[PointWithCovarianceStamped], cam: Optional[RegionOfInterestWithConfidenceStamped], dist: Optional[Range]):
+        if type(kal) == PointWithCovarianceStamped:
+            self.kal = kal
         # sanity check: if the distance sensor reads under a certain value emergency stop
         if dist and dist.range < AppleApproach.ESTOP_DIST_Z:
             self.die('Detected obstruction at {}'.format(dist.range))
@@ -337,7 +343,12 @@ class AppleApproach():
         return (AppleApproach.State.IDLE, 'done approaching'.format())
     def is_done(self):
         with self.lock:
-            return self.done
+            if self.done:
+                print("this is self.kal" + str(self.kal))
+                self.kal.point = (self.kal.point[0], self.kal.point[1] + self.PALM_DIST_OFF_Y, self.kal.point[2])
+                return self.done, self.kal.point
+            else:
+                return self.done, []
 
 
 def main():
