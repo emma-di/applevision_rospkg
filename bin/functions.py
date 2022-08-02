@@ -51,8 +51,8 @@ def get_success(results):
     for result in results:
         if result in ["success", True]:
             successes += 1
-    x = (len(results))
-    return (str(round((successes/float(x))*100, 2)) + "percent")
+    x = (len(results))-1
+    return (str(round((successes/float(x))*100, 2)) + " percent")
 
 # computes the magnitude of a vector    
 def magnitude(vector):
@@ -74,5 +74,6 @@ def average_value(list, start):
     count = 0
     for x in range (start +1, len(list)+1):
         sum = sum + x
+        print(sum)
         count += 1
     return(sum/count)
