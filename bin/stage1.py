@@ -131,9 +131,9 @@ Results_success = functions.get_success(Results)
 Angles_success = functions.get_success(Angles)
 Average_Time = functions.average_value(Approach_Times, 1)
 print(Average_Time)
-Results.insert(Results_success, 0)
-Angles.insert(Angles_success, 0)
-Approach_Times.insert("Average time: "+str(Average_Time), 0)
+Results.insert(0, Results_success)
+Angles.insert(0, Angles_success)
+Approach_Times.insert(0, "Average time: "+str(Average_Time))
 # log results to csv
 with open('stage1-Sheet1.csv', 'w') as spreadsheet:
     writer = csv.writer(spreadsheet)
