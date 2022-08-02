@@ -67,3 +67,12 @@ def angle_success(v1, v2):
         return True
     else:
         return False
+
+# gets average of values in a list from a certain point to the end
+def average_value(list, start):
+    sum = 0
+    count = 0
+    for x in range (start +1, len(list)+1):
+        sum = sum + x
+        count += 1
+    return(sum/count)

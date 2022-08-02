@@ -1,0 +1,8 @@
+condense fake_sensor.launch into demo.launch
+in rviz, uncheck:
+    range
+    axis
+    query goal state (in motion planning)
+    pointwithcovariance
+installs:
+    python2.7 -m pip install scipy

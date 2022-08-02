@@ -16,6 +16,7 @@ import rospy
 import functions
 import tf
 import time
+import csv
 import numpy as np
 from message_filters import Subscriber
 from sensor_msgs.msg import Range
@@ -39,13 +40,14 @@ joints = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_j
 initial = [-3.79, -2.09, 2.15, -.052, .92, 3.87]
 # apple coords
 apple = [-.51, -.16, 1.3]
+# direction the palm faces
+palm_vector = [0,0,.1]
 
 # if you want to get fancy, make a list of trials + results and log to a csv
-# how to do with docker :(
-# trials = []
-Results = []
-Angles = []
-Approach_Times = []
+Trials = [' ','TRIAL:']
+Results = ['RESULT:']
+Angles = ['ANGLE:']
+Approach_Times = ['APPROACH TIME:']
 
 # setup for frame transformations (for getting coords)
 listener = tf.TransformListener()
@@ -67,7 +69,7 @@ def move_to_home():
 # executes apple approach (from applevision_motion)
 def apple_approach():
     global min_tick
-    # reset min_tick (multithreading- SynchronizerMinTick never goes away)
+    # reset min_tick (multithreading -- SynchronizerMinTick never goes away)
     min_tick.callbacks = {}
     # do the approach
     min_tick.registerCallback(approach.tick_callback)    
@@ -115,17 +117,27 @@ for x in range(int(input("Run how many times? "))):
     apple_array = np.array(apple)
     trans_array = np.array(trans)
     apple_vector = r.apply(trans_array-apple_array)
-    print("this is the apple" + str(apple_vector))
-    # direction that palm faces (CAN BE MOVED OUT OF LOOP)
-    palm_vector = [0,0,.1]
+    print("this is the apple: " + str(apple_vector))
  
     # log results
     x+=1
-    print("Number " + str(x) + " was a " + result)
+    #print("Number " + str(x) + " was a " + result)
+    Trials.append(x)
     Results.append(result)
     Angles.append(functions.angle_success(apple_vector, palm_vector))
     
-print(Results)
-print("Results success: " + str(functions.get_success(Results)))
-print("Angles success: " + str(functions.get_success(Angles)))
-print(Approach_Times)
+# calculate success
+Results_success = functions.get_success(Results)
+Angles_success = functions.get_success(Angles)
+Average_Time = functions.average_value(Approach_Times, 1)
+print(Average_Time)
+Results.insert(Results_success, 0)
+Angles.insert(Angles_success, 0)
+Approach_Times.insert("Average time: "+str(Average_Time), 0)
+# log results to csv
+with open('stage1-Sheet1.csv', 'w') as spreadsheet:
+    writer = csv.writer(spreadsheet)
+    writer.writerow(Trials)
+    writer.writerow(Results)
+    writer.writerow(Angles)
+    writer.writerow(Approach_Times)
