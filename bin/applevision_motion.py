@@ -343,12 +343,7 @@ class AppleApproach():
         return (AppleApproach.State.IDLE, 'done approaching'.format())
     def is_done(self):
         with self.lock:
-            if self.done:
-                print("this is self.kal" + str(self.kal))
-                self.kal.point = (self.kal.point[0], self.kal.point[1] + self.PALM_DIST_OFF_Y, self.kal.point[2])
-                return self.done, self.kal.point
-            else:
-                return self.done, []
+            return self.done
 
 
 def main():

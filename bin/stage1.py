@@ -8,7 +8,7 @@
     # roslaunch applevision_rospkg fake_sensor.launch (has been condensed with demo.launch -- you don't need to run this)
 
 # To (hopefully) run this:
-    # src/applevision_rospkg/bin/dontdie.py
+    # src/applevision_rospkg/bin/stage1.py
     
 from applevision_motion import MotionPlanner, AppleApproach
 from itertools import count
@@ -74,10 +74,9 @@ def apple_approach():
     # checks if process is done
     while True:
         rospy.sleep(1)
-        is_done, kal = approach.is_done()
         # a small problem: sometimes it takes too long to terminate & starts running again too early
-        if is_done:
-            return kal
+        if approach.is_done() == True:
+            return
             
 # loops through given number of times
 for x in range(int(input("Run how many times? "))):
@@ -112,29 +111,14 @@ for x in range(int(input("Run how many times? "))):
     if functions.nearby(trans, apple) == True:
         result = "success"
     
-    # REPLACE THESE WITH THE ACTUAL THINGS AHKJASFHLKJASH
-    #
-    #
-    #
-    #
     # apple vector in palm camera frame
     apple_array = np.array(apple)
     trans_array = np.array(trans)
-    print(apple_array)
-    print(trans_array)
     apple_vector = r.apply(trans_array-apple_array)
     print("this is the apple" + str(apple_vector))
     # direction that palm faces (CAN BE MOVED OUT OF LOOP)
     palm_vector = [0,0,.1]
-    
-    
-    
-    
-    
-    
-    
-    
-    
+ 
     # log results
     x+=1
     print("Number " + str(x) + " was a " + result)
