@@ -20,6 +20,7 @@ import csv
 import numpy as np
 from message_filters import Subscriber
 from sensor_msgs.msg import Range
+from datetime import datetime
 from applevision_rospkg.msg import RegionOfInterestWithConfidenceStamped, PointWithCovarianceStamped
 from helpers import SynchronizerMinTick
 from scipy.spatial.transform import Rotation as R
@@ -47,6 +48,7 @@ palm_vector = [0,0,.1]
 Trials = [' ','TRIAL:']
 Results = ['RESULT:']
 Angles = ['ANGLE:']
+Angle_Log = ['']
 Approach_Times = ['APPROACH TIME:']
 
 # setup for frame transformations (for getting coords)
@@ -79,9 +81,11 @@ def apple_approach():
         # a small problem: sometimes it takes too long to terminate & starts running again too early
         if approach.is_done() == True:
             return
+          
+runs = input("Run how many times? ")
             
 # loops through given number of times
-for x in range(int(input("Run how many times? "))):
+for x in range(int(runs)):
     # reset
     result = "fail"
 
@@ -101,12 +105,11 @@ for x in range(int(input("Run how many times? "))):
     
     # stop everything
     planner.stop()
-    rospy.sleep(5)
+    rospy.sleep(15)
     
     # check final position using transform frames
     listener.waitForTransform('/world','/palm',rospy.Time(), rospy.Duration(4.0))
     (trans, rot) = listener.lookupTransform('/world', '/palm', rospy.Time(0))
-    print(rot)
     r = R.from_quat(rot)
 
     # determine success (is palm close enough to apple?)
@@ -121,21 +124,21 @@ for x in range(int(input("Run how many times? "))):
  
     # log results
     x+=1
-    #print("Number " + str(x) + " was a " + result)
+    print("Number " + str(x) + " was a " + result)
     Trials.append(x)
     Results.append(result)
-    Angles.append(functions.angle_success(apple_vector, palm_vector))
-    
+    Angles.append(functions.angle_success(apple_vector, palm_vector)[1])
+    Angle_Log.append(functions.angle_success(apple_vector, palm_vector)[0])
+
 # calculate success
 Results_success = functions.get_success(Results)
-Angles_success = functions.get_success(Angles)
+Angles_success = functions.get_success(Angle_Log)
 Average_Time = functions.average_value(Approach_Times, 1)
-print(Average_Time)
 Results.insert(0, Results_success)
 Angles.insert(0, Angles_success)
 Approach_Times.insert(0, "Average time: "+str(Average_Time))
 # log results to csv
-with open('stage1-Sheet1.csv', 'w') as spreadsheet:
+with open('/root/data/stage1_{}_{}.csv'.format(runs, datetime.now()), 'a') as spreadsheet:
     writer = csv.writer(spreadsheet)
     writer.writerow(Trials)
     writer.writerow(Results)

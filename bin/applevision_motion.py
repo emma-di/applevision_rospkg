@@ -250,6 +250,7 @@ class AppleApproach():
         rospy.logfatal('{}'.format(msg)) #{LOG_PREFIX}{msg}')
         with self.lock:
             self.done = True
+            return
         #rospy.signal_shutdown('Death')
 
     def tick_callback(self, kal, cam, dist): #: Optional[PointWithCovarianceStamped], cam: Optional[RegionOfInterestWithConfidenceStamped], dist: Optional[Range]):

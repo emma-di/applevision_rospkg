@@ -51,7 +51,7 @@ def get_success(results):
     for result in results:
         if result in ["success", True]:
             successes += 1
-    x = (len(results))-1
+    x = len(results)-1
     return (str(round((successes/float(x))*100, 2)) + " percent")
 
 # computes the magnitude of a vector    
@@ -62,18 +62,16 @@ def magnitude(vector):
 def angle_success(v1, v2):
     dotproduct = float(v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2])
     angle = degrees(acos(dotproduct/(magnitude(v1)*magnitude(v2))))
-    print(angle)
     if angle <= 5:
-        return True
+        return True, round(angle,2)
     else:
-        return False
+        return False, round(angle, 2)
 
 # gets average of values in a list from a certain point to the end
 def average_value(list, start):
     sum = 0
     count = 0
-    for x in range (start +1, len(list)+1):
-        sum = sum + x
-        print(sum)
+    for x in range (start, len(list)):
+        sum = sum + float(list[x])
         count += 1
-    return(sum/count)
+    return(round(float(sum/count), 2))
