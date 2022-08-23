@@ -17,6 +17,7 @@ import functions
 import tf
 import time
 import csv
+import os
 import numpy as np
 from message_filters import Subscriber
 from sensor_msgs.msg import Range
@@ -50,6 +51,7 @@ Results = ['RESULT:']
 Angles = ['ANGLE:']
 Angle_Log = ['']
 Approach_Times = ['APPROACH TIME:']
+Apple_Vectors = ['', 'VECTOR:']
 
 # setup for frame transformations (for getting coords)
 listener = tf.TransformListener()
@@ -105,7 +107,11 @@ for x in range(int(runs)):
     
     # stop everything
     planner.stop()
-    rospy.sleep(15)
+    # ensure that is is stopped (sometimes it gets stuck)
+    planner.stop()
+    rospy.sleep(5)
+    planner.stop()
+    rospy.sleep(10)
     
     # check final position using transform frames
     listener.waitForTransform('/world','/palm',rospy.Time(), rospy.Duration(4.0))
@@ -120,6 +126,7 @@ for x in range(int(runs)):
     apple_array = np.array(apple)
     trans_array = np.array(trans)
     apple_vector = r.apply(trans_array-apple_array)
+    Apple_Vectors.append(apple_vector)
     print("this is the apple: " + str(apple_vector))
  
     # log results
@@ -132,15 +139,17 @@ for x in range(int(runs)):
 
 # calculate success
 Results_success = functions.get_success(Results)
-Angles_success = functions.get_success(Angle_Log)
-Average_Time = functions.average_value(Approach_Times, 1)
 Results.insert(0, Results_success)
+Angles_success = functions.get_success(Angle_Log)
 Angles.insert(0, Angles_success)
+Average_Time = functions.average_value(Approach_Times, 1, 15, 40) # excludes failed approach times
 Approach_Times.insert(0, "Average time: "+str(Average_Time))
 # log results to csv
-with open('/root/data/stage1_{}_{}.csv'.format(runs, datetime.now()), 'a') as spreadsheet:
+os.mkdir('/root/data/{}'.format(str(datetime.now())[0:16]))
+with open('/root/data/{}/stage1_{}.csv'.format(str(datetime.now())[0:16], runs), 'a') as spreadsheet:
     writer = csv.writer(spreadsheet)
     writer.writerow(Trials)
     writer.writerow(Results)
     writer.writerow(Angles)
+    writer.writerow(Apple_Vectors)
     writer.writerow(Approach_Times)
