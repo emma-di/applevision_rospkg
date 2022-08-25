@@ -73,7 +73,7 @@ def angle_success(v1, v2):
         return False, round(angle, 2)
 
 # gets average of values in a list from a certain point to the end
-# can choose to disregard any values under outlier threshold
+# can choose to disregard any values outside of outlier threshold
 def average_value(list, start, lower_bound, upper_bound):
     sum = 0
     count = 0
@@ -86,22 +86,32 @@ def average_value(list, start, lower_bound, upper_bound):
     return(round(float(sum/count), 2))
 
 # for angle/vector visualization (copied from https://matplotlib.org/stable/gallery/lines_bars_and_markers/scatter_hist.html#sphx-glr-gallery-lines-bars-and-markers-scatter-hist-py)
-def scatter_hist(axis1, axis2, ax, ax_histx, ax_histy):
+def scatter_hist(x1, y1, x2, y2, x3, y3, ax, ax_histx, ax_histy, outlier, size, c1, c2):
     # no labels
-    ax_histx.tick_params(axis=str(axis1), labelbottom=False)
-    ax_histy.tick_params(axis=str(axis2), labelleft=False)
+    ax_histx.tick_params(axis=str(x1), labelbottom=False)
+    ax_histy.tick_params(axis=str(x2), labelleft=False)
 
     # the scatter plot:
-    ax.scatter(axis1, axis2)
+    ax.scatter(x1, y1, s=size, color = str(c1), label = 'Successful overall & angle')
+    ax.scatter(x2, y2, s=size, color = str(c2), label = 'Successful overall, failed angle')
+    if outlier == True:
+        ax.scatter(x3, y3, s=size, color = str(c2), marker = '^', label = 'Failure')
+    # WHY DOES IT LABEL THE HISTOGRAM INSTEAD??
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.legend(loc="upper left")
 
     # now determine nice limits by hand:
-    binwidth = 0.25
-    xymax = max(np.max(np.abs(axis1)), np.max(np.abs(axis2)))
-    lim = (int(xymax/binwidth) + 1) * binwidth
+    #binwidth = 0.05 ## NOT SURE WHAT THIS DOES BUT IT WAS AT .25 BEFORE
+    #xymax = max(np.max(np.abs(axis1)), np.max(np.abs(axis2)))
+    #lim = (int(xymax/binwidth) + 1) * binwidth
 
-    bins = np.arange(-lim, lim + binwidth, binwidth)
-    ax_histx.hist(axis1, bins=bins)
-    ax_histy.hist(axis2, bins=bins, orientation='horizontal')
+    bins = 30
+    #bins = np.arange(-lim, lim + binwidth, binwidth)
+    ax_histx.hist((x1+x2), bins=bins, normed=True, alpha=0.5, histtype='stepfilled', color= c1, edgecolor='none')
+    ax_histy.hist((y1+y2), bins=bins, orientation='horizontal', normed=True, alpha=0.5, histtype='stepfilled', color=c1, edgecolor='none')
+    # ax_histx.hist(x3, bins=2, normed=True, alpha=0.5, histtype='stepfilled', color= c2, edgecolor='none')
+    # ax_histy.hist(x3, bins=2, orientation='horizontal', normed=True, alpha=0.5, histtype='stepfilled', color=c2, edgecolor='none')
 
 #lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
 
@@ -166,20 +176,31 @@ class DataVis():
         plt.title('Approach Times')
         plt.ylabel('Seconds')
         ax.legend(loc="upper left")
-        plt.savefig('/root/data/{}/approach_times.png'.format(self.name))
+        plt.savefig('/root/data/{}/time_vis.png'.format(self.name))
         plt.show()
     
     # copied (modified) from https://matplotlib.org/stable/gallery/lines_bars_and_markers/scatter_hist.html#sphx-glr-gallery-lines-bars-and-markers-scatter-hist-py
-    def angle_vis(self):
-        # YZ PLANES FROM Vectirs
+    def angle_vis(self, outlier): # outlier is a boolean: do you want the vis to include outliers?
+        x = []
         y = []
-        z = []
-        for vector in self.vectors:
-            y.append(vector[1])
-            z.append(vector[2])
-        
-        # MAKE THE CIRCLE CENTER EMPTY
-        cam_circle = plt.Circle((0, 0), 5, color='black')
+        badx = []
+        bady = []
+        failx = []
+        faily = []
+        for i in range (len(self.vectors)):
+            coord = (self.vectors[i])[1:(len(self.vectors[i])-1)].split(' ') # remove spaces and brackets
+            while '' in coord:
+                coord.remove('')
+            if self.results[i] == 'success':
+                if eval(self.angles[i]) <= 5:
+                    x.append(eval(coord[0]))
+                    y.append(eval(coord[1]))
+                else:
+                    badx.append(eval(coord[0]))
+                    bady.append(eval(coord[1]))
+            elif outlier == True:
+                failx.append(eval(coord[0]))
+                faily.append(eval(coord[1]))
         
         # definitions for the axes
         left, width = 0.1, 0.65
@@ -192,17 +213,27 @@ class DataVis():
 
         # start with a square Figure
         fig = plt.figure(figsize=(8, 8))
+        
+        # # add circle for 5 degree zone
+        # angle = np.linspace( 0 , 2 * np.pi , 150 )
+        # radius = 0.009
+        # x = radius * np.cos( angle ) 
+        # y = radius * np.sin( angle ) 
+        # ax.plot( x, y ) 
+        # ax.set_aspect( 1 ) 
 
+        # plot
         ax = fig.add_axes(rect_scatter)
-        # GET CAM MEASUREMENTS
-        ax.add_patch(cam_circle)
         ax_histx = fig.add_axes(rect_histx, sharex=ax)
         ax_histy = fig.add_axes(rect_histy, sharey=ax)
 
         # use the previously defined function
-        scatter_hist(y, z, ax, ax_histx, ax_histy)
-        
+        scatter_hist(x, y, badx, bady, failx, faily, ax, ax_histx, ax_histy, outlier, 30, 'steelblue', 'red')
+        if outlier == True:
+            plt.savefig('/root/data/{}/outlier_angles.png'.format(self.name))
+        else:
+            plt.savefig('/root/data/{}/angle_vis.png'.format(self.name))
         plt.show()
 
-data = DataVis('/root/data/2022-08-23 23:29/stage1_3.csv')
-data.angle_vis()
+data = DataVis('/root/data/2022-08-24 18:05/stage1_100.csv')
+data.angle_vis(False)
