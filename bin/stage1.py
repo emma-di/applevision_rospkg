@@ -25,6 +25,7 @@ from datetime import datetime
 from applevision_rospkg.msg import RegionOfInterestWithConfidenceStamped, PointWithCovarianceStamped
 from helpers import SynchronizerMinTick
 from scipy.spatial.transform import Rotation as R
+from data_visualizations import visualizations
 
 def auto(it=count()):
     return it.next()
@@ -36,6 +37,7 @@ Logger.addHandler(handler)
 Logger.setLevel(logging.DEBUG)
 
 rospy.init_node('applevision_motion')
+runs = input("Run how many times? ")
 
 # initial joint positions (for minimal planning problems)
 joints = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
@@ -45,13 +47,19 @@ apple = [-.51, -.16, 1.3]
 # direction the palm faces
 palm_vector = [0,0,.1]
 
-# if you want to get fancy, make a list of trials + results and log to a csv
-Trials = [' ','TRIAL:']
+# storing results
+Trials = ['TRIAL:']
 Results = ['RESULT:']
 Angles = ['ANGLE:']
 Angle_Log = ['']
 Approach_Times = ['APPROACH TIME:']
-Apple_Vectors = ['', 'VECTOR:']
+Apple_Vectors = ['VECTOR:']
+
+# csv with results
+current_time = functions.current_time()
+os.mkdir('/root/data/{}'.format(current_time))
+with open('/root/data/{}/stage1_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
+    writer = csv.writer(spreadsheet)
 
 # setup for frame transformations (for getting coords)
 listener = tf.TransformListener()
@@ -83,8 +91,6 @@ def apple_approach():
         # a small problem: sometimes it takes too long to terminate & starts running again too early
         if approach.is_done() == True:
             return
-          
-runs = input("Run how many times? ")
             
 # loops through given number of times
 for x in range(int(runs)):
@@ -136,20 +142,31 @@ for x in range(int(runs)):
     Results.append(result)
     Angles.append(functions.angle_success(apple_vector, palm_vector)[1])
     Angle_Log.append(functions.angle_success(apple_vector, palm_vector)[0])
+    with open('/root/data/{}/stage1_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
+        writer = csv.writer(spreadsheet)
+        writer.writerow(Trials)
+        writer.writerow(Results)
+        writer.writerow(Angles)
+        writer.writerow(Apple_Vectors)
+        writer.writerow(Approach_Times)
 
 # calculate success
+Trials.insert(0, '')
 Results_success = functions.get_success(Results)
 Results.insert(0, Results_success)
 Angles_success = functions.get_success(Angle_Log)
 Angles.insert(0, Angles_success)
+Apple_Vectors.insert(0, '')
 Average_Time = functions.average_value(Approach_Times, 1, 15, 40) # excludes failed approach times
 Approach_Times.insert(0, "Average time: "+str(Average_Time))
+
 # log results to csv
-os.mkdir('/root/data/{}'.format(str(datetime.now())[0:16]))
-with open('/root/data/{}/stage1_{}.csv'.format(str(datetime.now())[0:16], runs), 'a') as spreadsheet:
-    writer = csv.writer(spreadsheet)
-    writer.writerow(Trials)
-    writer.writerow(Results)
-    writer.writerow(Angles)
-    writer.writerow(Apple_Vectors)
-    writer.writerow(Approach_Times)
+with open('/root/data/{}/stage1_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
+        writer = csv.writer(spreadsheet)
+        writer.writerow(Trials)
+        writer.writerow(Results)
+        writer.writerow(Angles)
+        writer.writerow(Apple_Vectors)
+        writer.writerow(Approach_Times)
+# data visualizations
+visualizations('/root/data/{}/stage1_{}.csv'.format(current_time, runs))
