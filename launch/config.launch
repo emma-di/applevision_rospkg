@@ -6,7 +6,7 @@
     <node pkg="tf2_ros" type="static_transform_publisher" name="applevision_target_tf"
         args="0 0 0 0 0 1.5708 apple applevision_target" />
     <node pkg="tf2_ros" type="static_transform_publisher" name="applevision_start_tf"
-    args="0 0 -0.5 0 0 0 applevision_target applevision_start_pos" />
+        args="0 0 -0.5 0 0 0 applevision_target applevision_start_pos" />
     <node name="tf2_proxy_run" pkg="applevision_rospkg" type="tf2_proxy_run.py" respawn="true" />
     <node name="cam_image_proc" pkg="image_proc" type="image_proc" ns="palm_camera" />
 </launch>

@@ -115,7 +115,7 @@ for x in range(int(runs)):
     planner.stop()
     # ensure that is is stopped (sometimes it gets stuck)
     planner.stop()
-    rospy.sleep(5)
+    rospy.sleep(10)
     planner.stop()
     rospy.sleep(10)
     
