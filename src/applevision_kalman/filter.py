@@ -77,7 +77,7 @@ class KalmanMatricies:
         t = env.delta_t
         F = np.eye(3)  # not used currently
         G = np.eye(3)
-        Q = np.dot(env.accel_std**2 * G, np.transpose(G))
+        Q = np.matmul(env.accel_std**2 * G, np.transpose(G))
         H = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 0, 1]])
         I = np.eye(H.shape[1], H.shape[1])
 
@@ -227,7 +227,7 @@ class KalmanFilter():
         # measurements are with respect to the end effector. These two
         # coordinate systems are resolved in the filter using some hacky
         # adding and subtracting of the offset between the two.
-        ctrl_off = to_column(np.dot(self.mtx.G, control))
+        ctrl_off = to_column(np.matmul(self.mtx.G, control))
         x_predict_ee = self.x_est_base - ctrl_off
 
         dist_range = dist.range + self.env.apple_r if dist else 8
@@ -254,15 +254,14 @@ class KalmanFilter():
             [0, 0, 0, distvar]]))
         meas = to_column(cam_pos + (dist_range,))
 
-        p_predict = np.linalg.multi_dot([self.mtx.F, self.p_est, np.transpose(self.mtx.F)]) + self.mtx.Q
-        print (np.linalg.inv(np.linalg.multi_dot([self.mtx.H, p_predict, np.transpose(self.mtx.H)])))
-        K = np.linalg.multi_dot([p_predict, np.transpose(self.mtx.H), np.linalg.inv(np.linalg.multi_dot([self.mtx.H, p_predict, np.transpose(self.mtx.H)]))]) + var
-        x_est_ee = x_predict_ee + np.dot(K, np.dot(meas - self.mtx.H, x_predict_ee))
+        p_predict = np.matmul(self.mtx.F, np.matmul(self.p_est, np.transpose(self.mtx.F))) + self.mtx.Q
+        K = np.matmul(np.matmul(p_predict, np.transpose(self.mtx.H)), np.linalg.inv(np.matmul(self.mtx.H, np.matmul(p_predict, np.transpose(self.mtx.H))) + var))
+        x_est_ee = x_predict_ee + np.matmul(K, meas- np.matmul(self.mtx.H, x_predict_ee))
         self.x_est_base = x_est_ee + ctrl_off
-        fact = (self.mtx.I - np.dot(K, self.mtx.H))
+        fact = (self.mtx.I - np.matmul(K, self.mtx.H))
         # replace inf with a very large number to prevent nans being generated when inf*0 occurs
         var = np.nan_to_num(var, nan=0, posinf=1e9)
-        self.p_est = np.linalg.multi_dot([fact, p_predict, np.transpose(fact)]) + np.linalg.multi_dot([K, var, np.transpose(K)])
+        self.p_est = np.matmul(fact, np.matmul(p_predict, np.transpose(fact))) + np.matmul(K, np.matmul(var, np.transpose(K)))
         self.p_est = np.maximum(self.p_est, 0)
 
         assert np.all(var >= 0)
