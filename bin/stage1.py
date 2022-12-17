@@ -10,6 +10,14 @@
 # To (hopefully) run this:
     # src/applevision_rospkg/bin/stage1.py
     
+# Running it with the real robot:
+    # 1: roslaunch ur_robot_driver ur5e_bringup.launch robot_ip:=169.254.177.232
+        # wait until it's ready, then press play on the UR control panel
+    # 2: roslaunch applevision_moveit_config ur5e_moveit_planning_execution.launch
+    # 3: roslaunch applevision_moveit_config moveit_rviz.launch
+    # 4: roslaunch applevision_rospkg real_sensor_robot.launch
+    # 5: src/applevision_rospkg/bin/stage1.py
+    
 from applevision_motion import MotionPlanner, AppleApproach
 from itertools import count
 import rospy
@@ -39,11 +47,15 @@ Logger.setLevel(logging.DEBUG)
 rospy.init_node('applevision_motion')
 runs = input("Run how many times? ")
 
+# setup for frame transformations (for getting coords)
+listener = tf.TransformListener()
+
 # initial joint positions (for minimal planning problems)
 joints = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 initial = [-3.79, -2.09, 2.15, -.052, .92, 3.87]
 # apple coords
-apple = [-.51, -.16, 1.3]
+listener.waitForTransform('/world','/apple',rospy.Time(), rospy.Duration(4.0))
+(apple, rot) = listener.lookupTransform('/world', '/apple', rospy.Time(0))
 # direction the palm faces
 palm_vector = [0,0,.1]
 
@@ -60,9 +72,6 @@ current_time = functions.current_time()
 os.mkdir('/root/data/{}'.format(current_time))
 with open('/root/data/{}/stage1_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
     writer = csv.writer(spreadsheet)
-
-# setup for frame transformations (for getting coords)
-listener = tf.TransformListener()
 
 # setup for the apple approach and motion (from applevision_motion)
 SYNC_SLOP = 0.2

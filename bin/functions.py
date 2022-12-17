@@ -21,8 +21,9 @@ def nearby(real, apple):
     # calculates distance and height difference
     dstance = sqrt((abs(real[0]-apple[0]))**2+(abs(real[1]-apple[1]))**2+(abs(real[2]-apple[2]))**2)
     heightdiff = abs(real[2]-apple[2])
+    xdiff = abs(real[0]-apple[0])
     # check is distance is height difference is acceptable
-    if dstance < .15 and heightdiff <.05:
+    if dstance < .15 and heightdiff <.05 and xdiff < .05:
         return True
 
 # convert datetime to PST
