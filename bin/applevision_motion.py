@@ -271,8 +271,6 @@ class AppleApproach():
                         return
                     #rospy.signal_shutdown('All done!')
                 else:
-                    #print([key for key in self._state_cb_table.keys()])
-                    #print(self.state)
                     ret = self._state_cb_table[self.state](kal, cam, dist)
                     if ret:
                         next_state, msg = ret

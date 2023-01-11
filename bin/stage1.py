@@ -92,7 +92,7 @@ def apple_approach():
     global min_tick
     # reset min_tick (multithreading -- SynchronizerMinTick never goes away)
     min_tick.callbacks = {}
-    # do the approach
+    # do the approach (approach gets defined in the loop)
     min_tick.registerCallback(approach.tick_callback)    
     # checks if process is done
     while True:
