@@ -88,7 +88,7 @@ def move_to_home():
     planner.moveToJointPosition(joints, initial)
 
 # executes apple approach (from applevision_motion)
-def apple_approach():
+def apple_approach(approach):
     global min_tick
     # reset min_tick (multithreading -- SynchronizerMinTick never goes away)
     min_tick.callbacks = {}
@@ -108,14 +108,14 @@ for x in range(int(runs)):
 
     # create objects for apple approach
     planner = MotionPlanner()
-    approach = AppleApproach(planner)
+    approach1 = AppleApproach(planner)
     
     # go to home position
     move_to_home()
 
     # approach the apple (and log how long it takes)
     start = time.time()
-    kal = apple_approach()
+    kal = apple_approach(approach1)
     end = time.time()
     approach_time = round(end-start,2)
     Approach_Times.append(approach_time)
