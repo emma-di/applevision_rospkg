@@ -50,7 +50,7 @@ def magnitude(vector):
 def angle_success(v1, v2):
     dotproduct = float(v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2])
     angle = degrees(acos(dotproduct/(magnitude(v1)*magnitude(v2))))
-    if angle <= 5:
+    if angle <= 15:
         return True, round(angle,2)
     else:
         return False, round(angle, 2)
