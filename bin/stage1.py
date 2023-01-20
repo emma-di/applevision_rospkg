@@ -101,8 +101,8 @@ def apple_approach(approach):
         if approach.is_done() == True:
             return
             
-# loops through given number of times
-for x in range(int(runs)):
+    # loops through given number of times
+def loop_approach():
     # reset
     result = "fail"
 
@@ -143,7 +143,7 @@ for x in range(int(runs)):
     apple_vector = r.apply(trans_array-apple_array)
     Apple_Vectors.append(apple_vector)
     print("this is the apple: " + str(apple_vector))
- 
+
     # log results
     x+=1
     print("Number " + str(x) + " was a " + result)
@@ -158,6 +158,9 @@ for x in range(int(runs)):
         writer.writerow(Angles)
         writer.writerow(Apple_Vectors)
         writer.writerow(Approach_Times)
+            
+for x in range(int(runs)):
+    loop_approach()
 
 # calculate success
 Trials.insert(0, '')
