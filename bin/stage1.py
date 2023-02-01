@@ -84,7 +84,7 @@ min_tick = SynchronizerMinTick(
 
 # go to home position 
 # takes two parameters: list of joint names, list of joint positions
-def move_to_home():
+def move_to_home(planner):
     planner.moveToJointPosition(joints, initial)
 
 # executes apple approach (from applevision_motion)
@@ -105,13 +105,14 @@ def apple_approach(approach):
 def loop_approach():
     # reset
     result = "fail"
+    success = False
 
     # create objects for apple approach
     planner = MotionPlanner()
     approach1 = AppleApproach(planner)
     
     # go to home position
-    move_to_home()
+    move_to_home(planner)
 
     # approach the apple (and log how long it takes)
     start = time.time()
@@ -136,6 +137,7 @@ def loop_approach():
     # determine success (is palm close enough to apple?)
     if functions.nearby(trans, apple) == True:
         result = "success"
+        success = True
     
     # apple vector in palm camera frame
     apple_array = np.array(apple)
@@ -145,9 +147,6 @@ def loop_approach():
     print("this is the apple: " + str(apple_vector))
 
     # log results
-    x+=1
-    print("Number " + str(x) + " was a " + result)
-    Trials.append(x)
     Results.append(result)
     Angles.append(functions.angle_success(apple_vector, palm_vector)[1])
     Angle_Log.append(functions.angle_success(apple_vector, palm_vector)[0])
@@ -158,9 +157,11 @@ def loop_approach():
         writer.writerow(Angles)
         writer.writerow(Apple_Vectors)
         writer.writerow(Approach_Times)
+    return success
             
 for x in range(int(runs)):
     loop_approach()
+    Trials.append(x)
 
 # calculate success
 Trials.insert(0, '')

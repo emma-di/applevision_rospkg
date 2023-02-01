@@ -291,6 +291,7 @@ class AppleApproach():
             if not cam.w:
                 return None
             # center the robot
+            rospy.sleep(10)
             self.planner.start_move_to_pose((kal.point[0], kal.point[1], 0), MOVE_TOLERANCE)
             return (AppleApproach.State.CENTER_IN_MOTION, 'centering: {}, {}'.format(kal.point[0], kal.point[1]))
 
