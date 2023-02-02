@@ -222,7 +222,7 @@ class AppleApproach():
     STEP_DIST_Z = 0.05
     STOP_DIST_Z = 0.10
     ESTOP_DIST_Z = 0.06
-    PALM_DIST_OFF_Y = 0 #-0.017 # TODO: fix from URDF
+    PALM_DIST_OFF_Y = -0.017 # TODO: fix from URDF
 
     class State(Enum):
         IDLE = auto()
@@ -293,7 +293,7 @@ class AppleApproach():
             # center the robot
             rospy.sleep(10)
             self.planner.start_move_to_pose((kal.point[0], kal.point[1], 0), MOVE_TOLERANCE)
-            return (AppleApproach.State.CENTER_IN_MOTION, 'centering: {}, {}'.format(kal.point[0], kal.point[1]))
+            return (AppleApproach.State.CENTER_IN_MOTION, 'centering: {}, {}, {}'.format(kal.point[0], kal.point[1], kal.point[2]))
 
         # if we're close enough, stop
         if kal.point[2] <= AppleApproach.STOP_DIST_Z:

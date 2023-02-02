@@ -53,6 +53,7 @@ listener = tf.TransformListener()
 # initial joint positions (for minimal planning problems)
 joints = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 initial = [-3.79, -2.09, 2.15, -.052, .92, 3.87]
+# initial = [-3.79, -2.09, 2.15, -.28, .92, 3.87]
 # apple coords
 listener.waitForTransform('/world','/apple',rospy.Time(), rospy.Duration(4.0))
 (apple, rot) = listener.lookupTransform('/world', '/apple', rospy.Time(0))
@@ -84,8 +85,9 @@ min_tick = SynchronizerMinTick(
 
 # go to home position 
 # takes two parameters: list of joint names, list of joint positions
-def move_to_home(planner):
-    planner.moveToJointPosition(joints, initial)
+
+# def move_to_home():
+#     planner.moveToJointPosition(joints, initial)
 
 # executes apple approach (from applevision_motion)
 def apple_approach(approach):
@@ -112,7 +114,7 @@ def loop_approach():
     approach1 = AppleApproach(planner)
     
     # go to home position
-    move_to_home(planner)
+    planner.moveToJointPosition(joints, initial)
 
     # approach the apple (and log how long it takes)
     start = time.time()
