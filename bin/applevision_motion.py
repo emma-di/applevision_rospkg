@@ -289,11 +289,10 @@ class AppleApproach():
             and (abs(kal.point[0]) > AppleApproach.CENTER_THRESH_XY or abs(kal.point[1]) > AppleApproach.CENTER_THRESH_XY):
             # we need a bounding box to continue, otherwise the filter has only a guess
             if not cam.w:
-                print("CAM.W")
                 return None
             # center the robot
             self.planner.start_move_to_pose((kal.point[0], kal.point[1], 0), MOVE_TOLERANCE)
-            rospy.sleep(10)
+            rospy.sleep(.5)
             return (AppleApproach.State.CENTER_IN_MOTION, 'centering: {}, {}, {}'.format(kal.point[0], kal.point[1], kal.point[2]))
 
         # if we're close enough, stop
@@ -342,6 +341,7 @@ class AppleApproach():
             self.die('Failed to move in center with status {} error status {}'.format(status, self.planner.move_group_action.get_goal_status_text()))
 
         return (AppleApproach.State.IDLE, 'done approaching'.format())
+    
     def is_done(self):
         with self.lock:
             return self.done

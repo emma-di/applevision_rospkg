@@ -3,7 +3,7 @@
 # How successful is applevision_motion? 
 # Goal: run applevision_motion several times & determine success or failure
 
-# Before starting: have rviz & simulated camera open
+# (Simulation) Before starting: have rviz & simulated camera open
     # roslaunch applevision_moveit_config demo.launch
     # roslaunch applevision_rospkg fake_sensor.launch (has been condensed with demo.launch -- you don't need to run this)
 
@@ -11,11 +11,12 @@
     # src/applevision_rospkg/bin/stage1.py
     
 # Running it with the real robot:
-    # 1: roslaunch ur_robot_driver ur5e_bringup.launch robot_ip:=169.254.177.232
+    # X: roslaunch ur_robot_driver ur5e_bringup.launch robot_ip:=169.254.177.232
         # wait until it's ready, then press play on the UR control panel
-    # 2: roslaunch applevision_moveit_config ur5e_moveit_planning_execution.launch
-    # 3: roslaunch applevision_moveit_config moveit_rviz.launch
-    # 4: roslaunch applevision_rospkg real_sensor_robot.launch
+    # X: roslaunch applevision_moveit_config ur5e_moveit_planning_execution.launch
+    # X: roslaunch applevision_moveit_config moveit_rviz.launch
+    # X: roslaunch applevision_rospkg real_sensor_robot.launch
+    # 1: roslaunch applevision_moveit_config realrobot.launch
     # 5: src/applevision_rospkg/bin/stage1.py
     
 from applevision_motion import MotionPlanner, AppleApproach
@@ -47,13 +48,12 @@ Logger.setLevel(logging.DEBUG)
 rospy.init_node('applevision_motion')
 runs = input("Run how many times? ")
 
-# setup for frame transformations (for getting coords)
-listener = tf.TransformListener()
-
 # initial joint positions (for minimal planning problems)
 joints = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
-initial = [-3.79, -2.09, 2.15, -.052, .92, 3.87]
-# initial = [-3.79, -2.09, 2.15, -.28, .92, 3.87]
+initial = [-3.79, -2.09, 2.15, -.28, .92, 4.57]
+
+# setup for frame transformations (for getting coords)
+listener = tf.TransformListener()
 # apple coords
 listener.waitForTransform('/world','/apple',rospy.Time(), rospy.Duration(4.0))
 (apple, rot) = listener.lookupTransform('/world', '/apple', rospy.Time(0))
@@ -115,16 +115,17 @@ def loop_approach():
     
     # go to home position
     planner.moveToJointPosition(joints, initial)
+    rospy.sleep(2)
 
     # approach the apple (and log how long it takes)
     start = time.time()
-    kal = apple_approach(approach1)
+    apple_approach(approach1)
     end = time.time()
     approach_time = round(end-start,2)
     Approach_Times.append(approach_time)
     
     # stop everything
-    planner.stop()
+    # planner.stop()
     # ensure that is is stopped (sometimes it gets stuck)
     planner.stop()
     rospy.sleep(10)
@@ -140,6 +141,7 @@ def loop_approach():
     if functions.nearby(trans, apple) == True:
         result = "success"
         success = True
+    print("this trial was a " + result)
     
     # apple vector in palm camera frame
     apple_array = np.array(apple)
