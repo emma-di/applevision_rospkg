@@ -218,11 +218,13 @@ class MotionPlanner():
 class AppleApproach():
     CENTER_THRESH_XY = 0.02
     CAMERA_DEAD_THRESH_Z = 0.3
-    DIST_VAR_GOOD_THRESH = 0.02**2
+    DIST_VAR_GOOD_THRESH = .02
+    #0.02**2
     STEP_DIST_Z = 0.05
     STOP_DIST_Z = 0.10
     ESTOP_DIST_Z = 0.06
-    PALM_DIST_OFF_Y = -0.017 # TODO: fix from URDF
+    PALM_DIST_OFF_Y = 0
+    #-0.017 # TODO: fix from URDF
 
     class State(Enum):
         IDLE = auto()
@@ -265,7 +267,7 @@ class AppleApproach():
                         self.kal = kal
                 if self.state == AppleApproach.State.DONE:
                     rospy.loginfo(' Approach complete! Terminating...'.format()) #{LOG_PREFIX} Approach complete! Terminating...')
-                    rospy.sleep(5)
+                    rospy.sleep(2)
                     with self.lock:
                         self.done = True
                         return
@@ -291,8 +293,8 @@ class AppleApproach():
             if not cam.w:
                 return None
             # center the robot
+            rospy.sleep(2)
             self.planner.start_move_to_pose((kal.point[0], kal.point[1], 0), MOVE_TOLERANCE)
-            rospy.sleep(.5)
             return (AppleApproach.State.CENTER_IN_MOTION, 'centering: {}, {}, {}'.format(kal.point[0], kal.point[1], kal.point[2]))
 
         # if we're close enough, stop
@@ -301,9 +303,11 @@ class AppleApproach():
 
         # otherwise approach the apple slowly
         if kal.covariance[8] > AppleApproach.DIST_VAR_GOOD_THRESH:
+            rospy.sleep(2)
             self.planner.start_move_to_pose((kal.point[0], kal.point[1], min(kal.point[2] - AppleApproach.STOP_DIST_Z, AppleApproach.STEP_DIST_Z)), MOVE_TOLERANCE)
             return (AppleApproach.State.APPROACH_IN_MOTION, 'apple is centered: {}, {}, approaching slowly: {}'.format(kal.point[0], kal.point[1], kal.covariance[8]))
         else:
+            rospy.sleep(2)
             self.planner.start_move_to_pose((kal.point[0], kal.point[1], kal.point[2] - AppleApproach.STOP_DIST_Z), MOVE_TOLERANCE)
             return (AppleApproach.State.APPROACH_IN_MOTION, 'apple is centered: {}, {}, approaching quickly: {}'.format(kal.point[0], kal.point[1], kal.covariance[8]))
 

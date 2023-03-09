@@ -58,7 +58,7 @@ class DataVis():
             count = 0
             for i in range (len(self.times)):
                 if self.results[i] == 'success':
-                    if not(self.times[i] > 40 or self.times[i]<15):
+                    if not(self.times[i] > 40 or self.times[i]<10):
                         sum = sum + float(self.times[i])
                         count += 1
             self.avg_time = (round(float(sum/count), 2))  
@@ -77,7 +77,7 @@ class DataVis():
                 outlier_times.append(self.times[i])
                 outlier_trials.append(i)
             # successes, but with strange times
-            elif self.times[i] > 40 or self.times[i]<15:
+            elif self.times[i] > 40 or self.times[i]<5:
                 strange_times.append(self.times[i])
                 strange_trials.append(i)
             # normal success

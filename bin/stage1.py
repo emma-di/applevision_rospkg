@@ -105,6 +105,8 @@ def apple_approach(approach):
             
     # loops through given number of times
 def loop_approach():
+    rospy.sleep(10)
+    
     # reset
     result = "fail"
     success = False
@@ -130,7 +132,6 @@ def loop_approach():
     planner.stop()
     rospy.sleep(10)
     planner.stop()
-    rospy.sleep(10)
     
     # check final position using transform frames
     listener.waitForTransform('/world','/palm',rospy.Time(), rospy.Duration(4.0))
