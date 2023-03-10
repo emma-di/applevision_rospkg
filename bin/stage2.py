@@ -1,23 +1,11 @@
 #!/usr/bin/python2
 
-# How successful is applevision_motion? 
-# Goal: run applevision_motion several times & determine success or failure
-
-# (Simulation) Before starting: have rviz & simulated camera open
-    # roslaunch applevision_moveit_config demo.launch
-    # roslaunch applevision_rospkg fake_sensor.launch (has been condensed with demo.launch -- you don't need to run this)
-
-# To (hopefully) run this:
-    # src/applevision_rospkg/bin/stage1.py
+# Stage 2 goal: verify that it can approach the apple regardless of starting position
     
 # Running it with the real robot:
-    # X: roslaunch ur_robot_driver ur5e_bringup.launch robot_ip:=169.254.177.232
-        # wait until it's ready, then press play on the UR control panel
-    # X: roslaunch applevision_moveit_config ur5e_moveit_planning_execution.launch
-    # X: roslaunch applevision_moveit_config moveit_rviz.launch
-    # X: roslaunch applevision_rospkg real_sensor_robot.launch
     # 1: roslaunch applevision_moveit_config realrobot.launch
-    # 5: src/applevision_rospkg/bin/stage1.py
+        # wait until it's ready, then press play on the UR control panel
+    # 5: src/applevision_rospkg/bin/stage2.py
     
 from applevision_motion import MotionPlanner, AppleApproach
 from itertools import count
@@ -28,6 +16,7 @@ import time
 import csv
 import os
 import numpy as np
+import random
 from message_filters import Subscriber
 from sensor_msgs.msg import Range
 from datetime import datetime
@@ -51,7 +40,6 @@ runs = input("Run how many times? ")
 # initial joint positions (for minimal planning problems)
 joints = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 initial = [-3.63, -2.09, 2.15, -.28, .92, 4.57]
-# initial = [-3.79, -2.09, 2.15, -.28, .92, 4.57]
 
 # setup for frame transformations (for getting coords)
 listener = tf.TransformListener()
@@ -118,6 +106,7 @@ def loop_approach():
     
     # go to home position
     planner.moveToJointPosition(joints, initial)
+    planner.start_move_to_pose(((random.random()-0.5)/15, (random.random()-0.5)/15, 0), .03)
     rospy.sleep(2)
 
     # approach the apple (and log how long it takes)
