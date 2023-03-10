@@ -31,8 +31,8 @@ def scatter_hist(x1, y1, x2, y2, x3, y3, ax, ax_histx, ax_histy, outlier, size, 
 
     def binsamount(l):
         return int((max(l)-min(l))*500)
-    ax_histx.hist((x1+x2), bins=binsamount(x1+x2),  alpha=0.5, histtype='stepfilled', color= c1, edgecolor='none')
-    ax_histy.hist((y1+y2), bins=binsamount(y1+y2), orientation='horizontal',  alpha=0.5, histtype='stepfilled', color=c1, edgecolor='none')
+    ax_histx.hist((x1+x2), bins=abs(binsamount(x1+x2)),  alpha=0.5, histtype='stepfilled', color= c1, edgecolor='none')
+    ax_histy.hist((y1+y2), bins=abs(binsamount(y1+y2)), orientation='horizontal',  alpha=0.5, histtype='stepfilled', color=c1, edgecolor='none')
     # OUTLIER HISTOGRAMS??
     # ax_histx.hist(x3, bins=50, alpha=0.5, histtype='stepfilled', color= c3, edgecolor='none')
     # ax_histy.hist(x3, bins=50, orientation='horizontal',  alpha=0.5, histtype='stepfilled', color=c3, edgecolor='none')
@@ -53,6 +53,7 @@ class DataVis():
             self.vectors = (self.data[3])[2:self.end]
             times = (self.data[4])[2:self.end]
             self.times = [eval(i) for i in times]
+            self.start_coords = (self.data[5])[2:self.end]
             #get average time without fails THIS IS BAD I DONT WANT THIS HERE I WANT IT UP THERE
             sum = 0
             count = 0
@@ -99,7 +100,6 @@ class DataVis():
         ax.legend(loc="upper left")
         plt.savefig('/root/data/{}/time_vis.png'.format(self.name))
         plt.show()
-    
     # copied (modified) from https://matplotlib.org/stable/gallery/lines_bars_and_markers/scatter_hist.html#sphx-glr-gallery-lines-bars-and-markers-scatter-hist-py
     def angle_vis(self, outlier): # outlier is a boolean: do you want the vis to include outliers?
         x = []
@@ -114,14 +114,14 @@ class DataVis():
                 coord.remove('')
             if self.results[i] == 'success':
                 if eval(self.angles[i]) <= 5:
-                    x.append(eval(coord[0]))
-                    y.append(eval(coord[1]))
+                    x.append(float(coord[0]))
+                    y.append(float(coord[1]))
                 else:
-                    badx.append(eval(coord[0]))
-                    bady.append(eval(coord[1]))
+                    badx.append(float(coord[0]))
+                    bady.append(float(coord[1]))
             elif outlier == True:
-                failx.append(eval(coord[0]))
-                faily.append(eval(coord[1]))
+                failx.append(float(coord[0]))
+                faily.append(float(coord[1]))
         
         # definitions for the axes
         left, width = 0.1, 0.65
@@ -147,7 +147,18 @@ class DataVis():
         else:
             plt.savefig('/root/data/{}/angle_vis.png'.format(self.name), bbox_inches='tight')
         plt.show()
+    def start_vis(self):
+            x = []
+            y = []
+            for coord in self.start_coords:
+                print(coord)
+                x.append(float(coord[0]))
+                y.append(float(coord[1]))
 
+            # plot
+            plt.scatter(x,y,30,'skyblue')
+            plt.savefig('/root/data/{}/start_vis.png'.format(self.name), bbox_inches='tight')
+            plt.show()
 # data = DataVis('/root/data/2022-08-23 17:51/stage1_100.csv')
 # data.angle_vis(True)
 
@@ -158,3 +169,6 @@ def visualizations(spreadsheet):
     data.time_vis()
     data.angle_vis(True)
     data.angle_vis(False)
+    data.start_vis()
+    
+visualizations('/root/data/2023-03-10 15:29/stage2_5.csv')

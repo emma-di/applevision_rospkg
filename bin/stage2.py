@@ -56,11 +56,12 @@ Angles = ['ANGLE:']
 Angle_Log = ['']
 Approach_Times = ['APPROACH TIME:']
 Apple_Vectors = ['VECTOR:']
+Start_Coords = ['START COORDS:']
 
 # csv with results
 current_time = functions.current_time()
 os.mkdir('/root/data/{}'.format(current_time))
-with open('/root/data/{}/stage1_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
+with open('/root/data/{}/stage2_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
     writer = csv.writer(spreadsheet)
 
 # setup for the apple approach and motion (from applevision_motion)
@@ -106,8 +107,11 @@ def loop_approach():
     
     # go to home position
     planner.moveToJointPosition(joints, initial)
-    planner.start_move_to_pose(((random.random()-0.5)/15, (random.random()-0.5)/15, 0), .03)
-    rospy.sleep(2)
+    startcoords = [(random.random()-0.5)/10, (random.random()-0.5)/10]
+    Start_Coords.append(startcoords)
+    print("start pos: " + str(startcoords))
+    planner.start_move_to_pose((startcoords[0],startcoords[1], 0), .03)
+    rospy.sleep(2.5)
 
     # approach the apple (and log how long it takes)
     start = time.time()
@@ -145,13 +149,14 @@ def loop_approach():
     Results.append(result)
     Angles.append(functions.angle_success(apple_vector, palm_vector)[1])
     Angle_Log.append(functions.angle_success(apple_vector, palm_vector)[0])
-    with open('/root/data/{}/stage1_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
+    with open('/root/data/{}/stage2_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
         writer = csv.writer(spreadsheet)
         writer.writerow(Trials)
         writer.writerow(Results)
         writer.writerow(Angles)
         writer.writerow(Apple_Vectors)
         writer.writerow(Approach_Times)
+        writer.writerow(Start_Coords)
     return success
             
 for x in range(int(runs)):
@@ -165,16 +170,18 @@ Results.insert(0, Results_success)
 Angles_success = functions.get_success(Angle_Log)
 Angles.insert(0, Angles_success)
 Apple_Vectors.insert(0, '')
-Average_Time = functions.average_value(Approach_Times, 1, 15, 40) # excludes failed approach times
+Average_Time = functions.average_value(Approach_Times, 1, 13, 40) # excludes failed approach times
 Approach_Times.insert(0, "Average time: "+str(Average_Time))
+Start_Coords.insert(0, '')
 
 # log results to csv
-with open('/root/data/{}/stage1_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
+with open('/root/data/{}/stage2_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
         writer = csv.writer(spreadsheet)
         writer.writerow(Trials)
         writer.writerow(Results)
         writer.writerow(Angles)
         writer.writerow(Apple_Vectors)
         writer.writerow(Approach_Times)
+        writer.writerow(Start_Coords)
 # data visualizations
-visualizations('/root/data/{}/stage1_{}.csv'.format(current_time, runs))
+visualizations('/root/data/{}/stage2_{}.csv'.format(current_time, runs))

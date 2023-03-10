@@ -303,11 +303,11 @@ class AppleApproach():
 
         # otherwise approach the apple slowly
         if kal.covariance[8] > AppleApproach.DIST_VAR_GOOD_THRESH:
-            rospy.sleep(2)
+            rospy.sleep(1.5)
             self.planner.start_move_to_pose((kal.point[0], kal.point[1], min(kal.point[2] - AppleApproach.STOP_DIST_Z, AppleApproach.STEP_DIST_Z)), MOVE_TOLERANCE)
             return (AppleApproach.State.APPROACH_IN_MOTION, 'apple is centered: {}, {}, approaching slowly: {}'.format(kal.point[0], kal.point[1], kal.covariance[8]))
         else:
-            rospy.sleep(2)
+            rospy.sleep(1.5)
             self.planner.start_move_to_pose((kal.point[0], kal.point[1], kal.point[2] - AppleApproach.STOP_DIST_Z), MOVE_TOLERANCE)
             return (AppleApproach.State.APPROACH_IN_MOTION, 'apple is centered: {}, {}, approaching quickly: {}'.format(kal.point[0], kal.point[1], kal.covariance[8]))
 
