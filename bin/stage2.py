@@ -39,7 +39,8 @@ runs = input("Run how many times? ")
 
 # initial joint positions (for minimal planning problems)
 joints = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
-initial = [-3.63, -2.09, 2.15, -.28, .92, 4.57]
+# initial = [-3.63, -2.09, 2.15, -.28, .92, 4.57]
+initial = [-3.278, -2.16, 1.93, .2046, 1.36, 4.35]
 
 # setup for frame transformations (for getting coords)
 listener = tf.TransformListener()
@@ -107,10 +108,12 @@ def loop_approach():
     
     # go to home position
     planner.moveToJointPosition(joints, initial)
-    startcoords = [(random.random()-0.5)/10, (random.random()-0.5)/10]
+    planner.start_move_to_pose((0,0,0), .03)
+    startcoords = [(random.random()-0.5)/5, (random.random()-0.5)/5]
     Start_Coords.append(startcoords)
     print("start pos: " + str(startcoords))
     planner.start_move_to_pose((startcoords[0],startcoords[1], 0), .03)
+    # planner.start_move_to_pose((.03,.03, 0), .03)
     rospy.sleep(2.5)
 
     # approach the apple (and log how long it takes)

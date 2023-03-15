@@ -78,7 +78,7 @@ class DataVis():
                 outlier_times.append(self.times[i])
                 outlier_trials.append(i)
             # successes, but with strange times
-            elif self.times[i] > 40 or self.times[i]<5:
+            elif self.times[i] > 40 or self.times[i]<13:
                 strange_times.append(self.times[i])
                 strange_trials.append(i)
             # normal success
@@ -147,18 +147,18 @@ class DataVis():
         else:
             plt.savefig('/root/data/{}/angle_vis.png'.format(self.name), bbox_inches='tight')
         plt.show()
-    def start_vis(self):
-            x = []
-            y = []
-            for coord in self.start_coords:
-                print(coord)
-                x.append(float(coord[0]))
-                y.append(float(coord[1]))
+    # def start_vis(self):
+    #         x = []
+    #         y = []
+    #         for coord in self.start_coords:
+    #             print(coord)
+    #             x.append(float(coord[0]))
+    #             y.append(float(coord[1]))
 
-            # plot
-            plt.scatter(x,y,30,'skyblue')
-            plt.savefig('/root/data/{}/start_vis.png'.format(self.name), bbox_inches='tight')
-            plt.show()
+    #         # plot
+    #         plt.scatter(x,y,30,'skyblue')
+    #         plt.savefig('/root/data/{}/start_vis.png'.format(self.name), bbox_inches='tight')
+    #         plt.show()
 # data = DataVis('/root/data/2022-08-23 17:51/stage1_100.csv')
 # data.angle_vis(True)
 
@@ -169,6 +169,6 @@ def visualizations(spreadsheet):
     data.time_vis()
     data.angle_vis(True)
     data.angle_vis(False)
-    data.start_vis()
+    # data.start_vis()
     
-visualizations('/root/data/2023-03-10 15:29/stage2_5.csv')
+#visualizations('/root/data/2023-03-10 15:29/stage2_5.csv')

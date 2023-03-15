@@ -67,6 +67,8 @@ class MotionPlanner():
                             tolerance=0.01,
                             wait=True,
                             **kwargs):
+        self.move_group_action.cancel_all_goals()
+        
         # Check arguments
         supported_args = ("max_velocity_scaling_factor",
                           "planner_id",
@@ -148,12 +150,28 @@ class MotionPlanner():
 
         # 12. fill in other planning options
         g.planning_options.look_around = False
-        g.planning_options.replan = False
+        g.planning_options.replan = True ##False
 
+        print("SENDING HOME")
         # 13. send goal
         self._action.send_goal(g)
         if wait:
             self._action.wait_for_result()
+            print(self._action.get_result())
+            pose = PoseStamped()
+            pose.pose.position.x = 0
+            pose.pose.position.y = 0
+            pose.pose.position.z = 0
+            pose.pose.orientation.w = 1
+            pose.header.frame_id = EE_FRAME
+
+            try:
+                transformed_response = self.tf_trans(pose, WORLD_FRAME, rospy.Duration())
+            except ServiceProxyFailed as e:
+                raise RuntimeError('TF2 service proxy failed') #from e
+            transformed_pose = transformed_response.transformed
+            print(transformed_pose)
+            print("HOME THING")
             return self._action.get_result()
         else:
             return None
@@ -174,6 +192,7 @@ class MotionPlanner():
         except ServiceProxyFailed as e:
             raise RuntimeError('TF2 service proxy failed') #from e
         transformed_pose = transformed_response.transformed
+        print(transformed_pose)
         
         g = MoveGroupGoal()
         g.request.start_state.is_diff = True
@@ -186,10 +205,12 @@ class MotionPlanner():
         b = BoundingVolume()
         b.primitives.append(s)
         b.primitive_poses.append(transformed_pose.pose)
+        print(transformed_pose.pose)
         p1.constraint_region = b
         p1.weight = 1
         c1.position_constraints.append(p1)
 
+        print("ORIENTATION CONTRAINT")
         # locked forward for now
         o1 = OrientationConstraint()
         o1.header.frame_id = WORLD_FRAME
@@ -319,6 +340,9 @@ class AppleApproach():
         status = self.planner.move_group_action.get_state()
         if status != GoalStatus.SUCCEEDED:
             self.die('Failed to move in center with status {} error status {}'.format(status, self.planner.move_group_action.get_goal_status_text()))
+            with self.lock:
+                self.done = True
+                return
 
         # else we are forced to continue approaching since the camera is too noisy to learn anything
         return (AppleApproach.State.IDLE, 'done centering'.format())
@@ -329,6 +353,9 @@ class AppleApproach():
         # sanity check: if the distance sensor reads under a certain value emergency stop
         if dist and dist.range < AppleApproach.ESTOP_DIST_Z:
             self.die('Detected obstruction at {}'.format(dist.range))
+            with self.lock:
+                self.done = True
+                return
 
         # if the filter reads under the threshold, we're done! Better to stop early
         if kal and kal.point[2] <= AppleApproach.STOP_DIST_Z:
