@@ -96,7 +96,7 @@ def apple_approach(approach):
             
     # loops through given number of times
 def loop_approach():
-    rospy.sleep(10)
+    rospy.sleep(5)
     
     # reset
     result = "fail"
@@ -104,19 +104,19 @@ def loop_approach():
 
     # create objects for apple approach
     planner = MotionPlanner()
-    approach1 = AppleApproach(planner)
     
     # go to home position
     planner.moveToJointPosition(joints, initial)
     planner.start_move_to_pose((0,0,0), .03)
+    # stage 2 testing is seeing if it can approach from various starting positions
     startcoords = [(random.random()-0.5)/5, (random.random()-0.5)/5]
     Start_Coords.append(startcoords)
     print("start pos: " + str(startcoords))
     planner.start_move_to_pose((startcoords[0],startcoords[1], 0), .03)
-    # planner.start_move_to_pose((.03,.03, 0), .03)
     rospy.sleep(2.5)
 
     # approach the apple (and log how long it takes)
+    approach1 = AppleApproach(planner)
     start = time.time()
     apple_approach(approach1)
     end = time.time()
@@ -173,7 +173,7 @@ Results.insert(0, Results_success)
 Angles_success = functions.get_success(Angle_Log)
 Angles.insert(0, Angles_success)
 Apple_Vectors.insert(0, '')
-Average_Time = functions.average_value(Approach_Times, 1, 13, 40) # excludes failed approach times
+Average_Time = functions.average_value(Approach_Times, 1, 13, 55) # excludes failed approach times
 Approach_Times.insert(0, "Average time: "+str(Average_Time))
 Start_Coords.insert(0, '')
 

@@ -107,7 +107,7 @@ def apple_approach(approach):
             
     # loops through given number of times
 def loop_approach():
-    rospy.sleep(10)
+    rospy.sleep(5)
     
     # reset
     result = "fail"
@@ -115,14 +115,16 @@ def loop_approach():
 
     # create objects for apple approach
     planner = MotionPlanner()
-    approach1 = AppleApproach(planner)
     
     # go to home position
     planner.moveToJointPosition(joints, initial)
+    # go to the zeroed camera angle
     planner.start_move_to_pose((0,0,0), .01)
-    rospy.sleep(20)
+    rospy.sleep(2.5)
 
     # approach the apple (and log how long it takes)
+    # MOVED THIS OBJECT HERE IN CASE IT WAS INTERFERING WITH GOING TO HOME
+    approach1 = AppleApproach(planner)
     start = time.time()
     apple_approach(approach1)
     end = time.time()

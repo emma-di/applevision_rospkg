@@ -53,16 +53,10 @@ class DataVis():
             self.vectors = (self.data[3])[2:self.end]
             times = (self.data[4])[2:self.end]
             self.times = [eval(i) for i in times]
-            self.start_coords = (self.data[5])[2:self.end]
-            #get average time without fails THIS IS BAD I DONT WANT THIS HERE I WANT IT UP THERE
-            sum = 0
-            count = 0
-            for i in range (len(self.times)):
-                if self.results[i] == 'success':
-                    if not(self.times[i] > 40 or self.times[i]<10):
-                        sum = sum + float(self.times[i])
-                        count += 1
-            self.avg_time = (round(float(sum/count), 2))  
+            if (self.data[5])[2:self.end]:
+                self.start_coords = (self.data[5])[2:self.end]
+            #THIS IS SCUFFED FIX THIS
+            self.avg_time = (((self.data[4])[1])[-4:]) 
     # visualization for approach times (scatter plot + avg time line)
     def time_vis(self):
         # search for outliers
@@ -169,6 +163,6 @@ def visualizations(spreadsheet):
     data.time_vis()
     data.angle_vis(True)
     data.angle_vis(False)
-    # data.start_vis()
+    data.start_vis()
     
-#visualizations('/root/data/2023-03-10 15:29/stage2_5.csv')
+visualizations('/root/data/2023-03-31 12:03/stage2_5.csv')
