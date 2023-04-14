@@ -6,6 +6,7 @@
 import csv
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 # for angle/vector visualization (copied (modified) from https://matplotlib.org/stable/gallery/lines_bars_and_markers/scatter_hist.html#sphx-glr-gallery-lines-bars-and-markers-scatter-hist-py)
 def scatter_hist(x1, y1, x2, y2, x3, y3, ax, ax_histx, ax_histy, outlier, size, c1, c2, c3):
@@ -53,10 +54,8 @@ class DataVis():
             self.vectors = (self.data[3])[2:self.end]
             times = (self.data[4])[2:self.end]
             self.times = [eval(i) for i in times]
-            if (self.data[5])[2:self.end]:
-                self.start_coords = (self.data[5])[2:self.end]
-            #THIS IS SCUFFED FIX THIS
-            self.avg_time = (((self.data[4])[1])[-4:]) 
+            self.avg_time = eval(((self.data[4])[0])[0:5])
+            self.start_coords = (self.data[5])[2:self.end]
     # visualization for approach times (scatter plot + avg time line)
     def time_vis(self):
         # search for outliers
@@ -72,7 +71,7 @@ class DataVis():
                 outlier_times.append(self.times[i])
                 outlier_trials.append(i)
             # successes, but with strange times
-            elif self.times[i] > 40 or self.times[i]<13:
+            elif self.times[i] > 60 or self.times[i]<13:
                 strange_times.append(self.times[i])
                 strange_trials.append(i)
             # normal success
@@ -89,10 +88,13 @@ class DataVis():
         ax.text(101, self.avg_time-.4,self.avg_time) # display average time
         
         ax.set_xticklabels([]) # remove x-axis labels
+        ax.set_xticks([])
         plt.title('Approach Times')
         plt.ylabel('Seconds')
-        ax.legend(loc="upper left")
-        plt.savefig('/root/data/{}/time_vis.png'.format(self.name))
+        plt.savefig('/root/data/time_vis_noleg.png')
+        ax.legend(loc="lower right")
+        # plt.savefig('/root/data/{}/time_vis.png'.format(self.name))
+        plt.savefig('/root/data/time_vis.png')
         plt.show()
     # copied (modified) from https://matplotlib.org/stable/gallery/lines_bars_and_markers/scatter_hist.html#sphx-glr-gallery-lines-bars-and-markers-scatter-hist-py
     def angle_vis(self, outlier): # outlier is a boolean: do you want the vis to include outliers?
@@ -141,28 +143,52 @@ class DataVis():
         else:
             plt.savefig('/root/data/{}/angle_vis.png'.format(self.name), bbox_inches='tight')
         plt.show()
-    # def start_vis(self):
-    #         x = []
-    #         y = []
-    #         for coord in self.start_coords:
-    #             print(coord)
-    #             x.append(float(coord[0]))
-    #             y.append(float(coord[1]))
+    
+    def start_vis(self):
+            startx = []
+            starty = []
+            fstartx = []
+            fstarty = []
+            for i in range(len(self.start_coords)):
+            # for coord in self.start_coords:
+                coord = self.start_coords[i]
+                if self.results[i] == "fail":
+                    x = coord[1:21]
+                    x = x.replace(",",' ')
+                    x=eval(x)
+                    fstartx.append(x)
+                    y = coord[22:41]
+                    y = y.replace(",",' ')
+                    y= eval(y)
+                    fstarty.append(y)
+                else:
+                    x = coord[1:21]
+                    x = x.replace(",",' ')
+                    x=eval(x)
+                    startx.append(x)
+                    y = coord[22:41]
+                    y = y.replace(",",' ')
+                    y= eval(y)
+                    starty.append(y)
+            fig,ax = plt.subplots(1)
+            ax.scatter(startx, starty, 30, c='skyblue', label = 'Success')
+            ax.scatter(fstartx, fstarty, 30, c='red', label = 'Fail')
+            ax.set_xticks([-.10, -.05, 0, .05, .10])
+            plt.savefig('/root/data/start_vis_noleg.png')
+            ax.legend(loc="lower right")
 
-    #         # plot
-    #         plt.scatter(x,y,30,'skyblue')
-    #         plt.savefig('/root/data/{}/start_vis.png'.format(self.name), bbox_inches='tight')
-    #         plt.show()
-# data = DataVis('/root/data/2022-08-23 17:51/stage1_100.csv')
-# data.angle_vis(True)
+            # plt.savefig('/root/data/{}/start_vis.png'.format(self.name), bbox_inches='tight')
+            plt.savefig('/root/data/start_vis.png')
+            plt.show()
 
 # creates and saves all visualizations
 # spreadsheet is the location of the csv file (/root/data/...100.csv)
 def visualizations(spreadsheet):
     data = DataVis(str(spreadsheet))
     data.time_vis()
-    data.angle_vis(True)
-    data.angle_vis(False)
+    #data.angle_vis(True)
+    #data.angle_vis(False)
     data.start_vis()
-    
-visualizations('/root/data/2023-03-31 12:03/stage2_5.csv')
+ 
+visualizations('/root/catkin_ws/src/applevision_rospkg/bin/stage2data.csv')
+# visualizations('/root/data/2023-03-08 17:01/stage1_10.csv')

@@ -181,7 +181,7 @@ Angles_success = functions.get_success(Angle_Log)
 Angles.insert(0, Angles_success)
 Apple_Vectors.insert(0, '')
 Average_Time = functions.average_value(Approach_Times, 1, 15, 40) # excludes failed approach times
-Approach_Times.insert(0, "Average time: "+str(Average_Time))
+Approach_Times.insert(0, str(Average_Time))
 
 # log results to csv
 with open('/root/data/{}/stage1_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
