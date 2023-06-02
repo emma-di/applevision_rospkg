@@ -80,15 +80,16 @@ class DataVis():
                 normal_trials.append(i)
                 
         fig,ax = plt.subplots(1)
-        ax.scatter(normal_trials, normal_times, c='green', label = 'Success - Normal') # plot normal success times
-        ax.scatter(strange_trials, strange_times, c = 'red', label = 'Success - Abnormal') # plot strange successes times
-        ax.scatter(outlier_trials, outlier_times, c = 'red', marker = '^', label = 'Failure') # plot failure times
-        ax.scatter([0,106], [self.avg_time+15, 10], c = 'white') # makes space to display average time and legend
+        ax.scatter(normal_trials, normal_times, c='skyblue', label = 'Success') # plot normal success times
+        # ax.scatter(strange_trials, strange_times, c = 'red', label = 'Success - Abnormal') # plot strange successes times
+        ax.scatter(outlier_trials, outlier_times, c = 'red', marker = 'X', label = 'Failure') # plot failure times
+        # ax.scatter([0,106], [self.avg_time+15, 10], c = 'white') # makes space to display average time and legend
+        # ax.plot(np.linspace(self.avg_time, self.avg_time, 100), c= 'blue', label = 'Average Time') # plot average time
+        # ax.text(101, self.avg_time-.4,self.avg_time) # display average time text
+        # ax.scatter([0,106], [self.avg_time+ 15, 10], c = 'white') # makes space to display average time and legend
         ax.plot(np.linspace(self.avg_time, self.avg_time, 100), c= 'blue', label = 'Average Time') # plot average time
-        ax.text(101, self.avg_time-.4,self.avg_time) # display average time
         
-        ax.set_xticklabels([]) # remove x-axis labels
-        ax.set_xticks([])
+        ax.set_xticks([1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
         plt.title('Approach Times')
         plt.ylabel('Seconds')
         plt.savefig('/root/data/time_vis_noleg.png')
@@ -172,7 +173,7 @@ class DataVis():
                     starty.append(y)
             fig,ax = plt.subplots(1)
             ax.scatter(startx, starty, 30, c='skyblue', label = 'Success')
-            ax.scatter(fstartx, fstarty, 30, c='red', label = 'Fail')
+            ax.scatter(fstartx, fstarty, 30, c='red', marker = 'X', label = 'Fail')
             ax.set_xticks([-.10, -.05, 0, .05, .10])
             plt.savefig('/root/data/start_vis_noleg.png')
             ax.legend(loc="lower right")
@@ -190,5 +191,5 @@ def visualizations(spreadsheet):
     #data.angle_vis(False)
     data.start_vis()
  
-visualizations('/root/catkin_ws/src/applevision_rospkg/bin/stage2data.csv')
+# visualizations('/root/catkin_ws/src/applevision_rospkg/bin/stage2data.csv')
 # visualizations('/root/data/2023-03-08 17:01/stage1_10.csv')
