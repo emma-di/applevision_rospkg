@@ -8,7 +8,7 @@ from sensor_msgs.msg import Image
 from cv_bridge.core import CvBridge
 from applevision_rospkg.msg import RegionOfInterestWithConfidenceStamped
 from helpers import HeaderCalc
-#import applevision_vision
+from applevision_vision import MODEL_PATH
 from ultralytics import YOLO
 
 
@@ -29,147 +29,160 @@ model = YOLO('/root/catkin_ws/src/applevision_rospkg/src/applevision_vision/best
 #     return result
 
 
-# def unwrap_detection(input_image, output_data):
-#     class_ids = []
-#     confidences = []
-#     boxes = []
+def unwrap_detection(input_image, output_data):
+    class_ids = []
+    confidences = []
+    boxes = []
 
-#     rows = output_data.shape[0]
-#     image_width, image_height, _ = input_image.shape
+    rows = output_data.shape[0]
+    image_width, image_height, _ = input_image.shape
 
-#     x_factor = image_width / 360
-#     y_factor = image_height / 640
+    x_factor = image_width / 360
+    y_factor = image_height / 640
 
-#     for r in range(rows):
-#         row = output_data[r]
-#         print(row)
-#         confidence = row[4]
-#         if confidence >= CONFIDENCE_THRESH:
+    for r in range(rows):
+        row = output_data[r]
+        print(row)
+        confidence = row[4]
+        if confidence >= CONFIDENCE_THRESH:
 
-#             classes_scores = row[5:]
-#             _, _, _, max_indx = cv2.minMaxLoc(classes_scores)
-#             class_id = max_indx[1]
-#             if (classes_scores[class_id] > .25):
+            classes_scores = row[5:]
+            _, _, _, max_indx = cv2.minMaxLoc(classes_scores)
+            class_id = max_indx[1]
+            if (classes_scores[class_id] > .25):
 
-#                 confidences.append(confidence)
-#                 class_ids.append(class_id)
+                confidences.append(confidence)
+                class_ids.append(class_id)
 
-#                 x, y, w, h = row[0].item(), row[1].item(), row[2].item(
-#                 ), row[3].item()
-#                 left = int((x - 0.5 * w) * x_factor)
-#                 top = int((y - 0.5 * h) * y_factor)
-#                 width = int(w * x_factor)
-#                 height = int(h * y_factor)
-#                 box = np.array([left, top, width, height])
-#                 boxes.append(box)
-#     return class_ids, confidences, boxes
-
-
-# class AppleVisionHandler:
-
-#     def __init__(self, net, topic: str, frame: str,
-#                  debug_frame_topic: str) -> None:
-#         self.net = net
-#         self.pub = rospy.Publisher(topic,
-#                                    RegionOfInterestWithConfidenceStamped,
-#                                    queue_size=10)
-#         self.pub_debug = rospy.Publisher(debug_frame_topic,
-#                                          Image,
-#                                          queue_size=10)
-#         self._br = CvBridge()
-#         self._header = HeaderCalc(frame)
-
-#     def run_applevision(self, im: Image):
-#         if rospy.Time.now() - im.header.stamp > rospy.Duration.from_sec(0.1):
-#             # this frame is too old
-#             rospy.logwarn_throttle_identical(3, 'CV: Ignoring old frame')
-#             return None
-
-#         # convert to cv2 image
-#         start = time.time()
-#         frame = self._br.imgmsg_to_cv2(im, 'bgr8')
-#         adjusted_image = format_yolov5(frame)
-#         self.net.setInput(adjusted_image)
-#         predictions = self.net.forward()
-#         output = predictions[0]
-#         class_ids, confidences, boxes = unwrap_detection(frame, output)
-
-#         # Remove duplicates using non-max suppression
-#         indexes = cv2.dnn.NMSBoxes(boxes, confidences, CONFIDENCE_THRESH, 0.45)
-#         result_class_ids = []
-#         result_confidences = []
-#         result_boxes = []
-
-#         for i in indexes:
-#             result_confidences.append(confidences[i])
-#             result_class_ids.append(class_ids[i])
-#             result_boxes.append(boxes[i])
-
-#         # print(confidences, boxes, "\n")
-#         if len(confidences) > 0:
-#             # Order them for fast indexing later
-#             boxes = [tuple(b) for b in boxes]
-#             confidences, boxes = zip(
-#                 *sorted(zip(confidences, boxes), reverse=True))
-
-#             # TODO: base varience off of confidence
-#             msg = RegionOfInterestWithConfidenceStamped(
-#                 header=self._header.get_header(),
-#                 x=boxes[0][0],
-#                 y=boxes[0][1],
-#                 w=boxes[0][2],
-#                 h=boxes[0][3],
-#                 image_w=640,
-#                 image_h=360,
-#                 confidence=confidences[0])
-#             self.pub.publish(msg)
-
-#             # attempted to put in json format string
-#             # string_to_write = "{"+"confidence: {}".format(confidences[0]) + ", box (x,y,w,h): {}".format(boxes[0])+ "}"
-#             # write_coords(string_to_write)
-
-#             # Display the resulting frame
-#             box = boxes[0]
-#             conf = confidences[0]
-#             color = (255, 255, 0)
-#             cv2.rectangle(frame, box, color, 2)
-#             cv2.rectangle(frame, (box[0], box[1] - 20),
-#                           (box[0] + box[2], box[1]), color, -1)
-#             cv2.putText(frame, f"Apple: {conf:.2}", (box[0] + 5, box[1] - 5),
-#                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-#         else:
-#             msg = RegionOfInterestWithConfidenceStamped(
-#                 header=self._header.get_header(),
-#                 x=0,
-#                 y=0,
-#                 w=0,
-#                 h=0,
-#                 image_w=640,
-#                 image_h=360,
-#                 confidence=0)
-#             self.pub.publish(msg)
-
-#         debug_im = self._br.cv2_to_imgmsg(frame)
-#         self.pub_debug.publish(debug_im)
-
-#         end = time.time()
-#         print(f'Took {end - start:.2f} secs')
+                x, y, w, h = row[0].item(), row[1].item(), row[2].item(
+                ), row[3].item()
+                left = int((x - 0.5 * w) * x_factor)
+                top = int((y - 0.5 * h) * y_factor)
+                width = int(w * x_factor)
+                height = int(h * y_factor)
+                box = np.array([left, top, width, height])
+                boxes.append(box)
+    return class_ids, confidences, boxes
 
 
-# if __name__ == '__main__':
-#     rospy.init_node('applevision_fake_sensor_data')
+class AppleVisionHandler:
 
-#     net = cv2.dnn.readNet(str(MODEL_PATH))
-#     net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-#     net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA_FP16)
+    def __init__(self, net, topic: str, frame: str,
+                 debug_frame_topic: str) -> None:
+        self.net = net
+        self.pub = rospy.Publisher(topic,
+                                   RegionOfInterestWithConfidenceStamped,
+                                   queue_size=10)
+        self.pub_debug = rospy.Publisher(debug_frame_topic,
+                                         Image,
+                                         queue_size=10)
+        self._br = CvBridge()
+        self._header = HeaderCalc(frame)
 
-#     # TODO: add image_proc
-#     vision_handler = AppleVisionHandler(net, 'applevision/apple_camera',
-#                                         'palm_camera',
-#                                         'applevision/debug_apple_camera')
-#     sub = rospy.Subscriber('palm_camera/image_rect_color',
-#                            Image,
-#                            vision_handler.run_applevision,
-#                            queue_size=20)
+    def run_applevision(self, im: Image):
+        if rospy.Time.now() - im.header.stamp > rospy.Duration.from_sec(0.1):
+            # this frame is too old
+            rospy.logwarn_throttle_identical(3, 'CV: Ignoring old frame')
+            return None
 
-#     rospy.spin()
+        # convert to cv2 image
+        start = time.time()
+        frame = self._br.imgmsg_to_cv2(im, 'bgr8')
+        # adjusted_image = format_yolov5(frame)
+        # self.net.setInput(adjusted_image)
+        blob = cv2.dnn.blobFromImage(frame, 1/255.0, (640, 640), swapRB=True, crop=False)
+        self.net.setInput(blob)
+        predictions = self.net.forward()
+        # predictions = predictions.transpose((0, 2, 1))
+        output = predictions[0]
+        class_ids, confidences, boxes = unwrap_detection(frame, output) #doesn't lineup with tut, will revisit later https://alimustoofaa.medium.com/how-to-load-model-yolov8-onnx-cv2-dnn-3e176cde16e6 
+
+        # Remove duplicates using non-max suppression
+        indexes = cv2.dnn.NMSBoxes(boxes, confidences, CONFIDENCE_THRESH, 0.45)
+        result_class_ids = []
+        result_confidences = []
+        result_boxes = []
+
+        for i in indexes:
+            result_confidences.append(confidences[i])
+            result_class_ids.append(class_ids[i])
+            result_boxes.append(boxes[i])
+
+        # print(confidences, boxes, "\n")
+        if len(confidences) > 0:
+            # Order them for fast indexing later
+            boxes = [tuple(b) for b in boxes]
+            confidences, boxes = zip(
+                *sorted(zip(confidences, boxes), reverse=True))
+
+            # TODO: base varience off of confidence
+            msg = RegionOfInterestWithConfidenceStamped(
+                header=self._header.get_header(),
+                x=boxes[0][0],
+                y=boxes[0][1],
+                w=boxes[0][2],
+                h=boxes[0][3],
+                image_w=640,
+                image_h=360,
+                confidence=confidences[0])
+            self.pub.publish(msg)
+
+            # attempted to put in json format string
+            # string_to_write = "{"+"confidence: {}".format(confidences[0]) + ", box (x,y,w,h): {}".format(boxes[0])+ "}"
+            # write_coords(string_to_write)
+
+            # Display the resulting frame
+            # box = boxes[0]
+            # conf = confidences[0]
+            # color = (255, 255, 0)
+            # cv2.rectangle(frame, box, color, 2)
+            # cv2.rectangle(frame, (box[0], box[1] - 20),
+            #               (box[0] + box[2], box[1]), color, -1)
+            for i in indexes:
+                box = boxes[i]
+                left = box[0]
+                top = box[1]
+                width = box[2]
+                height = box[3]
+            conf=confidences[0]
+            cv2.rectangle(frame, (left, top), (left + width, top + height), (0,255,0), 3)
+            Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            cv2.putText(frame, f"Apple: {conf:.2}", (box[0] + 5, box[1] - 5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+        else:
+            msg = RegionOfInterestWithConfidenceStamped(
+                header=self._header.get_header(),
+                x=0,
+                y=0,
+                w=0,
+                h=0,
+                image_w=640,
+                image_h=360,
+                confidence=0)
+            self.pub.publish(msg)
+
+        debug_im = self._br.cv2_to_imgmsg(frame)
+        self.pub_debug.publish(debug_im)
+
+        end = time.time()
+        print(f'Took {end - start:.2f} secs')
+
+
+if __name__ == '__main__':
+    rospy.init_node('applevision_fake_sensor_data')
+
+    net = cv2.dnn.readNet(str(MODEL_PATH))
+    net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+    net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA_FP16)
+
+    # TODO: add image_proc
+    vision_handler = AppleVisionHandler(net,
+                                        'applevision/apple_camera',
+                                        'palm_camera',
+                                        'applevision/debug_apple_camera')
+    sub = rospy.Subscriber('palm_camera/image_rect_color',
+                           Image,
+                           vision_handler.run_applevision,
+                           queue_size=20)
+
+    rospy.spin()
