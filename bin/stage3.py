@@ -35,12 +35,12 @@ Logger.addHandler(handler)
 Logger.setLevel(logging.DEBUG)
 
 rospy.init_node('applevision_motion')
-runs = input("Run how many times? ")
+runs = functions.runs
+pct = input("Percent occlusion? ")
 
 # initial joint positions (for minimal planning problems)
-joints = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
-# initial = [-3.63, -2.09, 2.15, -.28, .92, 4.57]
-initial = [-3.278, -2.16, 1.93, .2046, 1.36, 4.35]
+joints = functions.joints
+initial = functions.initial
 
 # setup for frame transformations (for getting coords)
 listener = tf.TransformListener()
@@ -58,12 +58,11 @@ Angle_Log = ['']
 Approach_Times = ['APPROACH TIME:']
 Apple_Vectors = ['VECTOR:']
 Start_Coords = ['START COORDS:']
-Occlusion = ['% OCCLUSION:']
 
 # csv with results
 current_time = functions.current_time()
 os.mkdir('/root/data/{}'.format(current_time))
-with open('/root/data/{}/stage3_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
+with open('/root/data/{}/stage3_{}_{}.csv'.format(current_time, runs, pct), 'w') as spreadsheet:
     writer = csv.writer(spreadsheet)
 
 # setup for the apple approach and motion (from applevision_motion)
@@ -143,11 +142,6 @@ def loop_approach():
         success = True
     print("this trial was a " + result)
     
-    if success == True:
-        pct_occlusion = get_occlusion()
-        # STAGE #3 JFHASJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
-    Occlusion.append(pct_occlusion)
-    
     # apple vector in palm camera frame
     apple_array = np.array(apple)
     trans_array = np.array(trans)
@@ -159,7 +153,7 @@ def loop_approach():
     Results.append(result)
     Angles.append(functions.angle_success(apple_vector, palm_vector)[1])
     Angle_Log.append(functions.angle_success(apple_vector, palm_vector)[0])
-    with open('/root/data/{}/stage3_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
+    with open('/root/data/{}/stage3_{}_{}.csv'.format(current_time, runs, pct), 'w') as spreadsheet:
         writer = csv.writer(spreadsheet)
         writer.writerow(Trials)
         writer.writerow(Results)
@@ -187,7 +181,7 @@ Start_Coords.insert(0, '')
 Occlusion.insert(0,'')
 
 # log results to csv
-with open('/root/data/{}/stage2_{}.csv'.format(current_time, runs), 'w') as spreadsheet:
+with open('/root/data/{}/stage3_{}_{}.csv'.format(current_time, runs, pct), 'w') as spreadsheet:
         writer = csv.writer(spreadsheet)
         writer.writerow(Trials)
         writer.writerow(Results)
@@ -197,4 +191,4 @@ with open('/root/data/{}/stage2_{}.csv'.format(current_time, runs), 'w') as spre
         writer.writerow(Start_Coords)
         writer.writerow(Occlusion)
 # data visualizations
-visualizations('/root/data/{}/stage3_{}.csv'.format(current_time, runs))
+visualizations('/root/data/{}/stage3_{}_{}.csv'.format(current_time, runs, pct))

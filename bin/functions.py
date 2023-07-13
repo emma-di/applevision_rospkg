@@ -67,3 +67,13 @@ def average_value(list, start, lower_bound, upper_bound):
                 sum = sum + float(list[x])
                 count += 1
     return(round(float(sum/count), 2))
+
+def get_occlusion(img):
+    pass
+
+# variables across all stages for easy updating
+runs = input("Run how many times? ")
+joints = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+# initial = [-3.63, -2.09, 2.15, -.28, .92, 4.57]
+# initial = [-3.79, -2.09, 2.15, -.28, .92, 4.57]
+initial = [-3.278, -2.16, 1.93, .2046, 1.36, 4.35]
