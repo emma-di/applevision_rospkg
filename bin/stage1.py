@@ -16,7 +16,7 @@
     # X: roslaunch applevision_moveit_config ur5e_moveit_planning_execution.launch
     # X: roslaunch applevision_moveit_config moveit_rviz.launch
     # X: roslaunch applevision_rospkg real_sensor_robot.launch
-    # 1: roslaunch applevision_moveit_config realrobot.launch
+    # 1: roslaunch applevision_moveit_config realrobot.launch (first 4 lines have been condensed into this)
     # 5: src/applevision_rospkg/bin/stage1.py
     
 from applevision_motion import MotionPlanner, AppleApproach

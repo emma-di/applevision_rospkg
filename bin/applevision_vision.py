@@ -12,21 +12,22 @@ from applevision_vision import MODEL_PATH
 from ultralytics import YOLO
 
 
-CONFIDENCE_THRESH = 0.5
+CONFIDENCE_THRESH = 0.8
 model = YOLO('/root/catkin_ws/src/applevision_rospkg/src/applevision_vision/best-roboflow.pt')
 
-# def format_yolov5(
-#     source
-# ):  #Function taken from medium: https://medium.com/mlearning-ai/detecting-objects-with-yolov5-opencv-python-and-c-c7cf13d1483c
-#     # YOLOV5 needs a square image. Basically, expanding the image to a square
-#     # put the image in square big enough
-#     col, row, _ = source.shape
-#     _max = max(col, row)
-#     resized = np.zeros((_max, _max, 3), np.uint8)
-#     resized[0:col, 0:row] = source
-#     # resize to 640x640, normalize to [0,1[ and swap Red and Blue channels
-#     result = cv2.dnn.blobFromImage(resized, 1 / 255.0, (640, 640), swapRB=True)
-#     return result
+def format_yolov5(
+    source
+):  #Function taken from medium: https://medium.com/mlearning-ai/detecting-objects-with-yolov5-opencv-python-and-c-c7cf13d1483c
+    # YOLOV5 needs a square image. Basically, expanding the image to a square
+    # put the image in square big enough
+    col, row, _ = source.shape
+    _max = max(col, row)
+    resized = np.zeros((_max, _max, 3), np.uint8)
+    resized[0:col, 0:row] = source
+    result=cv2.resize(source, (640,640))
+    # resize to 640x640, normalize to [0,1[ and swap Red and Blue channels
+    # result = cv2.dnn.blobFromImage(resized, 1 / 255.0, (640, 640), swapRB=True)
+    return result
 
 
 def unwrap_detection(input_image, output_data):
@@ -37,14 +38,15 @@ def unwrap_detection(input_image, output_data):
     rows = output_data.shape[0]
     image_width, image_height, _ = input_image.shape
 
-    x_factor = image_width / 360
-    y_factor = image_height / 640
+    x_factor = image_width / 640
+    y_factor = image_height / 360
 
     for r in range(rows):
-        row = output_data[r]
-        print(row)
-        confidence = row[4]
-        if confidence >= CONFIDENCE_THRESH:
+        row = output_data[r] #[0] #initially row = output_data[r]
+        rospy.logwarn(row)
+        confidence = row[5]
+        rospy.logwarn(confidence)
+        if confidence >= CONFIDENCE_THRESH: #originally confidence >= THRESH... but there are multiple objects
 
             classes_scores = row[5:]
             _, _, _, max_indx = cv2.minMaxLoc(classes_scores)
@@ -61,7 +63,9 @@ def unwrap_detection(input_image, output_data):
                 width = int(w * x_factor)
                 height = int(h * y_factor)
                 box = np.array([left, top, width, height])
+                # box = np.array([int(x), int(y), int(w), int(h)])
                 boxes.append(box)
+    rospy.logwarn(max(confidences))
     return class_ids, confidences, boxes
 
 
@@ -78,77 +82,73 @@ class AppleVisionHandler:
                                          queue_size=10)
         self._br = CvBridge()
         self._header = HeaderCalc(frame)
-
+    
     def run_applevision(self, im: Image):
         if rospy.Time.now() - im.header.stamp > rospy.Duration.from_sec(0.1):
             # this frame is too old
             rospy.logwarn_throttle_identical(3, 'CV: Ignoring old frame')
             return None
-
-        # convert to cv2 image
         start = time.time()
+        
+        CLASESS_YOLO = ['Green Apple', 'Red Apple']
         frame = self._br.imgmsg_to_cv2(im, 'bgr8')
-        # adjusted_image = format_yolov5(frame)
-        # self.net.setInput(adjusted_image)
-        blob = cv2.dnn.blobFromImage(frame, 1/255.0, (640, 640), swapRB=True, crop=False)
-        self.net.setInput(blob)
-        predictions = self.net.forward()
-        # predictions = predictions.transpose((0, 2, 1))
-        output = predictions[0]
-        class_ids, confidences, boxes = unwrap_detection(frame, output) #doesn't lineup with tut, will revisit later https://alimustoofaa.medium.com/how-to-load-model-yolov8-onnx-cv2-dnn-3e176cde16e6 
+        adjusted_image = format_yolov5(frame)
+        blob = cv2.dnn.blobFromImage(adjusted_image, 1/255.0, (640, 640), swapRB=True, crop=False)
+        net.setInput(blob)
+        preds = net.forward()
+        
+        class_ids, confs, boxes = list(), list(), list()
 
-        # Remove duplicates using non-max suppression
-        indexes = cv2.dnn.NMSBoxes(boxes, confidences, CONFIDENCE_THRESH, 0.45)
-        result_class_ids = []
-        result_confidences = []
-        result_boxes = []
+        image_height, image_width, _ = frame.shape
+        x_factor = image_width / 640
+        # rospy.logwarn(x_factor)
+        y_factor = image_height / 360
+        # x_factor = 10
+        # y_factor = 5
 
+        rows = preds[0].shape[0]
+
+        for i in range(rows):
+            row = preds[0][i]
+            conf = row[4]
+            
+            classes_score = row[4:]
+            _,_,_, max_idx = cv2.minMaxLoc(classes_score)
+            class_id = max_idx[0]
+            if (classes_score[class_id] > .25) and conf>CONFIDENCE_THRESH:
+                confs.append(conf)
+                label = CLASESS_YOLO[int(class_id)]
+                class_ids.append(label)
+                
+                #extract boxes
+                x, y, w, h = row[0].item(), row[1].item(), row[2].item(), row[3].item() 
+                left = int((x - 0.5 * w) * x_factor)
+                top = int((y - 0.5 * h) * y_factor)
+                width = int(w * x_factor)
+                height = int(h * y_factor)
+                box = np.array([left, top, width, height])
+                boxes.append(box)
+                
+        r_class_ids, r_confs, r_boxes = list(), list(), list()
+
+        indexes = cv2.dnn.NMSBoxes(boxes, confs, 0.25, 0.45) 
         for i in indexes:
-            result_confidences.append(confidences[i])
-            result_class_ids.append(class_ids[i])
-            result_boxes.append(boxes[i])
-
-        # print(confidences, boxes, "\n")
-        if len(confidences) > 0:
-            # Order them for fast indexing later
-            boxes = [tuple(b) for b in boxes]
-            confidences, boxes = zip(
-                *sorted(zip(confidences, boxes), reverse=True))
-
-            # TODO: base varience off of confidence
-            msg = RegionOfInterestWithConfidenceStamped(
-                header=self._header.get_header(),
-                x=boxes[0][0],
-                y=boxes[0][1],
-                w=boxes[0][2],
-                h=boxes[0][3],
-                image_w=640,
-                image_h=360,
-                confidence=confidences[0])
-            self.pub.publish(msg)
-
-            # attempted to put in json format string
-            # string_to_write = "{"+"confidence: {}".format(confidences[0]) + ", box (x,y,w,h): {}".format(boxes[0])+ "}"
-            # write_coords(string_to_write)
-
-            # Display the resulting frame
-            # box = boxes[0]
-            # conf = confidences[0]
-            # color = (255, 255, 0)
-            # cv2.rectangle(frame, box, color, 2)
-            # cv2.rectangle(frame, (box[0], box[1] - 20),
-            #               (box[0] + box[2], box[1]), color, -1)
-            for i in indexes:
-                box = boxes[i]
-                left = box[0]
-                top = box[1]
-                width = box[2]
-                height = box[3]
-            conf=confidences[0]
+            r_class_ids.append(class_ids[i])
+            r_confs.append(confs[i])
+            r_boxes.append(boxes[i])
+            
+        for i in indexes:
+            box = boxes[i]
+            left = box[0]
+            top = box[1]
+            width = box[2]
+            height = box[3]
+            
             cv2.rectangle(frame, (left, top), (left + width, top + height), (0,255,0), 3)
-            Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        # Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             cv2.putText(frame, f"Apple: {conf:.2}", (box[0] + 5, box[1] - 5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+        
         else:
             msg = RegionOfInterestWithConfidenceStamped(
                 header=self._header.get_header(),

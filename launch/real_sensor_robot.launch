@@ -30,7 +30,7 @@
     <arg name="load_robot_description" default="true"/>
     <!-- END STOLEN THINGS -->
 
-    <node name="applevision_vision" pkg="applevision_rospkg" type="applevision_vision.py" respawn="true" />
+    <node name="applevision_vision" pkg="applevision_rospkg" type="pt_vision.py" respawn="true" />
     <node name="applevision_visualizer" pkg="applevision_rospkg" type="applevision_visualizer.py" respawn="true" />
     <!-- this one is the problem -->
     <node name="applevision_filter" pkg="applevision_rospkg" type="applevision_filter_py3.py" respawn="true" />
