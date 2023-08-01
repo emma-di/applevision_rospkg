@@ -1,10 +1,9 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 
-# from typing import Optional
+from typing import Optional
 import rospy
 import numpy as np
 from tf2_msgs.msg import TFMessage
-import tf
 from geometry_msgs.msg import TransformStamped, PoseWithCovarianceStamped
 from sensor_msgs.msg import Range
 from message_filters import Subscriber
@@ -21,7 +20,7 @@ def second_order_var_approx(fprime, fdoubleprime, ftrippleprime, xvar):
 
 class FilterHandler:
 
-    def __init__(self, topic, kal): #: str, kal: KalmanFilter)-> None:
+    def __init__(self, topic: str, kal: KalmanFilter) -> None:
         self.tf_get = RobustServiceProxy('Tf2Transform',
                                          Tf2Transform,
                                          persistent=True)
@@ -37,15 +36,15 @@ class FilterHandler:
         self._header = HeaderCalc('palm')
         self._gen = np.random.default_rng()
 
-    def callback(self, dist, cam): # Optional[Range],cam: Optional[RegionOfInterestWithConfidenceStamped]):
+    def callback(self, dist: Optional[Range],
+                 cam: Optional[RegionOfInterestWithConfidenceStamped]):
         try:
-            # TF problems here
             dist_to_home = self.tf_get('palm', 'applevision_start_pos',
                                        rospy.Time(), rospy.Duration())
         except ServiceProxyFailed as e:
-            rospy.logwarn('tf_get service proxy failed with error {}'.format(e))
+            rospy.logwarn(f'tf_get service proxy failed with error {e}')
             return
-        trans = dist_to_home.transform #trans: TransformStamped
+        trans: TransformStamped = dist_to_home.transform
         control = np.transpose(
             np.array([
                 trans.transform.translation.x, trans.transform.translation.y,
@@ -108,11 +107,12 @@ def main():
         appl_proportion_low=0.75,
         appl_proportion_high=0.9)
     rospy.logdebug(
-        'Kalman filter using environment {} and filter {}.'.format(env, kal_filter))
+        f'Kalman filter using environment {env} and filter {kal_filter}.')
 
     # input('Press any key to start Applevision...')
     main_proc = FilterHandler('applevision/est_apple_pos', kal_filter)
-    dist = Subscriber('applevision/apple_dist', Range)
+    # dist = Subscriber('applevision/apple_dist', Range)
+    dist = Subscriber('gripper/distance', Range)
     camera = Subscriber('applevision/apple_camera',
                         RegionOfInterestWithConfidenceStamped)
     sync = SynchronizerMinTick([dist, camera], queue_size=10, slop=0.017, min_tick=0.2)

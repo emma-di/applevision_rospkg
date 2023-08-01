@@ -188,7 +188,8 @@ graph LR
         camera([/palm_camera/image_rect_color])
     end
 
-    dist([/applevision/apple_dist])
+    <!-- dist([/applevision/apple_dist]) -->
+    dist([/gripper/distance])
     bounding([/applevision/apple_camera])
     kalout([/applevision/est_apple_pos])
 
@@ -235,7 +236,8 @@ graph LR
         camera([/palm_camera/image_rect_color])
     end
 
-    dist([/applevision/apple_dist])
+    <!-- dist([/applevision/apple_dist]) -->
+    dist([/gripper/distance])
     bounding([/applevision/apple_camera])
     kalout([/applevision/est_apple_pos])
 

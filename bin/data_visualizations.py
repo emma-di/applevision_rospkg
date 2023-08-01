@@ -190,6 +190,99 @@ def visualizations(spreadsheet):
     #data.angle_vis(True)
     #data.angle_vis(False)
     data.start_vis()
+    
+def occlusion_levels(light75, light60, med75, med60, heavy75, heavy60, veryheavy75, veryheavy60):
+
+    # Numbers of pairs of bars you want
+    N = 4
+
+    # Data on X-axis ------
+
+    # Specify the values of 75% confidence success (height)
+    conf75 = (light75, med75, heavy75, veryheavy75)
+    # Specify the values of 60% condifence success (height)
+    conf60 = (light60, med60, heavy60, veryheavy60)
+
+    # Position of bars on x-axis
+    ind = np.arange(N)
+
+    # Figure size
+    plt.figure(figsize=(10,5))
+
+    # Width of a bar 
+    width = 0.3       
+
+    # Plotting
+    plt.bar(ind, conf75 , width, label='75% Confidence Identification Success', color = 'skyblue')
+    plt.bar(ind + width, conf60, width, label='60% Confidence Identification Success', color = 'blue')
+
+    plt.xlabel('Occlusion Level')
+    plt.ylabel('Percent Success')
+    plt.title('Apple Identification Success Rates')
+
+    # xticks()
+    # First argument - A list of positions at which ticks should be placed
+    # Second argument -  A list of labels to place at the given locations
+    plt.xticks(ind + width / 2, ('Light', 'Medium', 'Heavy', 'Very Heavy'))
+    
+    def autolabel(rects):
+        """Attach a text label above each bar in *rects*, displaying its height."""
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate('{}'.format(height),
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+
+    # Finding the best position for legends and putting it
+    plt.legend(loc='best')
+    plt.show()
+ 
+def occlusion_graph(light75, light60, med75, med60, heavy75, heavy60, veryheavy75, veryheavy60):
+
+    labels = ['Light', 'Medium', 'Heavy', 'Very Heavy']
+    # Specify the values of 75% confidence success (height)
+    conf75 = (light75, med75, heavy75, veryheavy75)
+    # Specify the values of 60% condifence success (height)
+    conf60 = (light60, med60, heavy60, veryheavy60)
+    filler = 110 # to make space for the legend
+
+    x = np.arange(len(labels))  # the label locations
+    width = 0.35  # the width of the bars
+
+    fig, ax = plt.subplots()
+    filler = ax.bar(x, filler, color = 'white')
+    rects1 = ax.bar(x - width/2, conf75, width, label='75% Confidence Threshold', color = 'skyblue')
+    rects2 = ax.bar(x + width/2, conf60, width, label='60% Confidence Threshold', color = 'blue')
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Percent Success')
+    ax.set_title('Apple Identification Success Rates')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
+
+    def autolabel(rects):
+        """Attach a text label above each bar in *rects*, displaying its height."""
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate('{}'.format(height),
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+
+
+    autolabel(rects1)
+    autolabel(rects2)
+
+    fig.tight_layout()
+
+    plt.show()
+    
  
 # visualizations('/root/catkin_ws/src/applevision_rospkg/bin/stage2data.csv')
 # visualizations('/root/data/2023-03-08 17:01/stage1_10.csv')
+
+occlusion_graph(100, 100, 100, 100, 85, 90, 60, 75)

@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# don't use this, can trash it
 
 import cv2
 from yolov8 import YOLOv8

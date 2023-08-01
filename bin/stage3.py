@@ -69,7 +69,7 @@ with open('/root/data/{}/stage3_{}_{}.csv'.format(current_time, runs, pct), 'w')
 SYNC_SLOP = 0.2
 SYNC_TICK = 0.5
 camera = Subscriber('applevision/apple_camera', RegionOfInterestWithConfidenceStamped, queue_size=10)
-dist = Subscriber('applevision/apple_dist', Range, queue_size=10)
+dist = Subscriber('gripper/dist', Range, queue_size=10)
 kal = Subscriber('applevision/est_apple_pos', PointWithCovarianceStamped, queue_size=10)
 min_tick = SynchronizerMinTick(
     [kal, camera, dist], queue_size=20, slop=SYNC_SLOP, min_tick=SYNC_TICK)
