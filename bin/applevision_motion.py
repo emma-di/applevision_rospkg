@@ -241,8 +241,8 @@ class AppleApproach():
     CAMERA_DEAD_THRESH_Z = 0.3
     DIST_VAR_GOOD_THRESH = .02
     #0.02**2
-    STEP_DIST_Z = 0.05
-    STOP_DIST_Z = 0.10
+    STEP_DIST_Z = .07 #0.05
+    STOP_DIST_Z = .1 #.08 #0.10
     ESTOP_DIST_Z = 0.06
     PALM_DIST_OFF_Y = 0
     #-0.017 # TODO: fix from URDF

@@ -74,7 +74,7 @@ class AppleVisionHandler:
                 confs.append(conf)
                 
                 # extract boxes
-                x, y, w, h = row[0].item(), row[1].item(), row[2].item(), row[3].item() 
+                x, y, w, h = row[0].item(), row[1].item(), row[2].item(), row[3].item() # we call them w and h, but irl they are x2 and y2
                 left = int(x*x_factor)
                 top = int(y*y_factor)
                 right = int(w*x_factor)
@@ -95,11 +95,12 @@ class AppleVisionHandler:
                 header=self._header.get_header(),
                 x=max_box[0],
                 y=max_box[1],
-                w=max_box[2],
-                h=max_box[3],
+                w=(max_box[2]-x),
+                h=(max_box[3]-y),
                 image_w=640,
                 image_h=360,
-                confidence=round(confs[max_id], 2))
+                confidence = confs[max_id])
+                # confidence=round(confs[max_id], 2)) type Tensor doesn't define __round__ method
             self.pub.publish(msg)
         
         else:

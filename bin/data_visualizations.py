@@ -55,7 +55,7 @@ class DataVis():
             times = (self.data[4])[2:self.end]
             self.times = [eval(i) for i in times]
             self.avg_time = eval(((self.data[4])[0])[0:5])
-            self.start_coords = (self.data[5])[2:self.end]
+            #self.start_coords = (self.data[5])[2:self.end]
     # visualization for approach times (scatter plot + avg time line)
     def time_vis(self):
         # search for outliers
@@ -189,7 +189,7 @@ def visualizations(spreadsheet):
     data.time_vis()
     #data.angle_vis(True)
     #data.angle_vis(False)
-    data.start_vis()
+    #data.start_vis()
     
 def occlusion_levels(light75, light60, med75, med60, heavy75, heavy60, veryheavy75, veryheavy60):
 
@@ -285,4 +285,4 @@ def occlusion_graph(light75, light60, med75, med60, heavy75, heavy60, veryheavy7
 # visualizations('/root/catkin_ws/src/applevision_rospkg/bin/stage2data.csv')
 # visualizations('/root/data/2023-03-08 17:01/stage1_10.csv')
 
-occlusion_graph(100, 100, 100, 100, 85, 90, 60, 75)
+#occlusion_graph(100, 100, 100, 100, 85, 90, 60, 75)
