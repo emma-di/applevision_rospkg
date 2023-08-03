@@ -57,6 +57,7 @@ def angle_success(v1, v2):
 
 # gets average of values in a list from a certain point to the end
 # can choose to disregard any values outside of outlier threshold
+#TODO: hacky, maybe find a way to automatically determine bounds (use IQR?)
 def average_value(list, start, lower_bound, upper_bound):
     sum = 0
     count = 0

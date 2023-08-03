@@ -179,7 +179,7 @@ Results.insert(0, Results_success)
 Angles_success = functions.get_success(Angle_Log)
 Angles.insert(0, Angles_success)
 Apple_Vectors.insert(0, '')
-Average_Time = functions.average_value(Approach_Times, 1, 15, 40) # excludes failed approach times
+Average_Time = functions.average_value(Approach_Times, 1, 8, 40) # excludes failed approach times was 15-40 before
 Approach_Times.insert(0, str(Average_Time))
 
 # log results to csv
