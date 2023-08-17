@@ -49,6 +49,7 @@ listener.waitForTransform('/world','/apple',rospy.Time(), rospy.Duration(4.0))
 (apple, rot) = listener.lookupTransform('/world', '/apple', rospy.Time(0))
 # direction the palm faces
 palm_vector = [0,0,.1]
+trial = 1
 
 # storing results
 Trials = ['TRIAL:']
@@ -58,6 +59,8 @@ Angle_Log = ['']
 Approach_Times = ['APPROACH TIME:']
 Apple_Vectors = ['VECTOR:']
 Start_Coords = ['START COORDS:']
+Max_Conf = ['MAX CONF:']
+Avg_Conf = ['AVG CONF:']
 
 # csv with results
 current_time = functions.current_time()
@@ -101,7 +104,6 @@ def loop_approach():
     # reset
     result = "fail"
     success = False
-    pct_occlusion = "N/A"
 
     # create objects for apple approach
     planner = MotionPlanner()
@@ -124,8 +126,13 @@ def loop_approach():
     approach_time = round(end-start,2)
     Approach_Times.append(approach_time)
     
+    # record conf data
+    approach1.conf_summary
+    # (max_conf, avg_conf) = approach1.conf_summary
+    # Max_Conf.append(max_conf)
+    # Avg_Conf.append(avg_conf)
+    
     # stop everything
-    # planner.stop()
     # ensure that is is stopped (sometimes it gets stuck)
     planner.stop()
     rospy.sleep(10)
@@ -161,13 +168,15 @@ def loop_approach():
         writer.writerow(Apple_Vectors)
         writer.writerow(Approach_Times)
         writer.writerow(Start_Coords)
-        writer.writerow(Occlusion)
+        writer.writerow(Max_Conf)
+        writer.writerow(Avg_Conf)
     return success
             
 for x in range(int(runs)):
     loop_approach()
     Trials.append(x)
 
+#TODO: make a function for this
 # calculate success
 Trials.insert(0, '')
 Results_success = functions.get_success(Results)
@@ -175,10 +184,11 @@ Results.insert(0, Results_success)
 Angles_success = functions.get_success(Angle_Log)
 Angles.insert(0, Angles_success)
 Apple_Vectors.insert(0, '')
-Average_Time = functions.average_value(Approach_Times, 1, 13, 55) # excludes failed approach times
+Average_Time = functions.average_value(Approach_Times, 1, 6, 55) # excludes failed approach times
 Approach_Times.insert(0, str(Average_Time))
 Start_Coords.insert(0, '')
-Occlusion.insert(0,'')
+Max_Conf.insert(0,'')
+Avg_Conf.insert(0,'')
 
 # log results to csv
 with open('/root/data/{}/stage3_{}_{}.csv'.format(current_time, runs, pct), 'w') as spreadsheet:
@@ -189,6 +199,7 @@ with open('/root/data/{}/stage3_{}_{}.csv'.format(current_time, runs, pct), 'w')
         writer.writerow(Apple_Vectors)
         writer.writerow(Approach_Times)
         writer.writerow(Start_Coords)
-        writer.writerow(Occlusion)
+        writer.writerow(Max_Conf)
+        writer.writerow(Avg_Conf)
 # data visualizations
 visualizations('/root/data/{}/stage3_{}_{}.csv'.format(current_time, runs, pct))

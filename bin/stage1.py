@@ -131,7 +131,6 @@ def loop_approach():
     Approach_Times.append(approach_time)
     
     # stop everything
-    # planner.stop()
     # ensure that is is stopped (sometimes it gets stuck)
     planner.stop()
     rospy.sleep(10)

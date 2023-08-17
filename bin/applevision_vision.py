@@ -12,20 +12,17 @@ import time
 import numpy as np
 
 CONFIDENCE_THRESH = 0.7
-CLASESS_YOLO = ['Green Apple', 'Red Apple']
+CLASESS_YOLO = ['Green Apple', 'Red Apple'] # we don't actually use green apple, I just didn't want to retrain
 
 def format_yolov8(
     source
 ):  #Function taken from medium: https://medium.com/mlearning-ai/detecting-objects-with-yolov5-opencv-python-and-c-c7cf13d1483c
-    # YOLOV5 needs a square image. Basically, expanding the image to a square
-    # put the image in square big enough
+    # YOLO needs a square image; expand the image so it is square
     col, row, _ = source.shape
     _max = max(col, row)
     resized = np.zeros((_max, _max, 3), np.uint8)
     resized[0:col, 0:row] = source
     result=cv2.resize(source, (640,640))
-    # resize to 640x640, normalize to [0,1[ and swap Red and Blue channels
-    # result = cv2.dnn.blobFromImage(resized, 1 / 255.0, (640, 640), swapRB=True)
     return result
 
 class AppleVisionHandler:
@@ -54,7 +51,7 @@ class AppleVisionHandler:
         frame = self._br.imgmsg_to_cv2(im, 'bgr8')
         adjusted_image = format_yolov8(frame)
             
-        results = model.predict(adjusted_image, stream = False, conf=CONFIDENCE_THRESH, imgsz=(640,640))
+        results = model.predict(adjusted_image, stream = False, classes = [1], conf=CONFIDENCE_THRESH, imgsz=(640,640))
         rows = results[0].boxes.shape[0]
         
         class_ids, confs, boxes = list(), list(), list()
@@ -67,30 +64,30 @@ class AppleVisionHandler:
             conf=row[4]
             class_id=row[5]
             
-            #find a way to get max conf value and have that be the only one (aka replace prev ones)
+            # check if confidence is high enough; if yes, record the box
             if conf>CONFIDENCE_THRESH:
-                label = CLASESS_YOLO[int(class_id)]
+                label = CLASESS_YOLO[int(class_id)] # only does red apples bc in line 57 we specify to only predict class 1
                 class_ids.append(label)
                 confs.append(conf)
                 
-                # extract boxes
-                x, y, w, h = row[0].item(), row[1].item(), row[2].item(), row[3].item() # we call them w and h, but irl they are x2 and y2
-                left = int(x*x_factor)
-                top = int(y*y_factor)
-                right = int(w*x_factor)
-                bottom=int(h*y_factor)
+                # extract boxes (w and h are actually x2 and y2, but I didn't change it to not confuse the nodes)
+                x, y, w, h = row[0].item(), row[1].item(), row[2].item(), row[3].item()
+                left = int(x*x_factor) # x1
+                top = int(y*y_factor) # y1
+                right = int(w*x_factor) # x2
+                bottom=int(h*y_factor)# y2
                 box = np.array([left, top, right, bottom])
                 boxes.append(box)
         
         # TODO: they used indexes = cv2.dnn.NMSBoxes(boxes, confs, 0.25, 0.45) in original code to suppress weak/overlapping boxes? how do you choose to just latch onto one apple?
         if confs:
-            # get max confidence box        
+            # only stores and draws the max confidence box        
             max_id = confs.index(max(confs))
             max_box = boxes[max_id]
             cv2.rectangle(frame, (max_box[0], max_box[1]), (max_box[2], max_box[3]), (0,255,0), 3)  
-            # cv2.rectangle(frame, (left, top), (right, bottom), (0,255,0), 3)
             cv2.putText(frame, f"Apple: {confs[max_id]:.2}", (max_box[0] + 5, max_box[1] - 5),
                         cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0), 1)
+            # publishing the position to /applevision/est_apple_pos
             msg = RegionOfInterestWithConfidenceStamped(
                 header=self._header.get_header(),
                 x=max_box[0],
@@ -100,8 +97,7 @@ class AppleVisionHandler:
                 image_w=640,
                 image_h=360,
                 confidence = confs[max_id])
-                # confidence=round(confs[max_id], 2)) type Tensor doesn't define __round__ method
-            self.pub.publish(msg)
+            self.pub.publish(msg) # publishes to palm_camera
         
         else:
             msg = RegionOfInterestWithConfidenceStamped(
@@ -113,7 +109,8 @@ class AppleVisionHandler:
                 image_w=640,
                 image_h=360,
                 confidence=0)
-            self.pub.publish(msg)
+            self.pub.publish(msg) # publishes 0 to palm_camera if no objects detected
+            #TODO: this could be why it still moves when no objects detected?
         
         # sending it to RViz
         debug_im = self._br.cv2_to_imgmsg(frame)
@@ -125,11 +122,8 @@ class AppleVisionHandler:
 if __name__ == '__main__':
     # TODO: WHY?
     rospy.init_node('applevision_fake_sensor_data')
-
-    # net = cv2.dnn.readNet(str(MODEL_PATH))
-    # net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-    # net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA_FP16)
     
+    # load YOLOv8 model
     net = YOLO('/root/catkin_ws/src/applevision_rospkg/src/applevision_vision/best-roboflow.pt')
 
     # TODO: add image_proc

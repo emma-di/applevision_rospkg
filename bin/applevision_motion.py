@@ -30,7 +30,7 @@ WORLD_FRAME = 'world'
 PLANNING_TIME = 5.0
 SYNC_SLOP = 0.2
 SYNC_TICK = 0.5
-MOVE_TOLERANCE = 0.03
+MOVE_TOLERANCE = 0.03 # what is this, the moving speed?
 #LOG_PREFIX = sys.argv[1]
 
 class MotionPlanner():
@@ -152,12 +152,12 @@ class MotionPlanner():
         g.planning_options.look_around = False
         g.planning_options.replan = True ##False
 
-        print("SENDING HOME")
+        # print("SENDING HOME")
         # 13. send goal
         self._action.send_goal(g)
         if wait:
             self._action.wait_for_result()
-            print(self._action.get_result())
+            # print(self._action.get_result())
             pose = PoseStamped()
             pose.pose.position.x = 0
             pose.pose.position.y = 0
@@ -170,8 +170,8 @@ class MotionPlanner():
             except ServiceProxyFailed as e:
                 raise RuntimeError('TF2 service proxy failed') #from e
             transformed_pose = transformed_response.transformed
-            print(transformed_pose)
-            print("HOME THING")
+            # print(transformed_pose)
+            # print("HOME THING")
             return self._action.get_result()
         else:
             return None
@@ -192,7 +192,7 @@ class MotionPlanner():
         except ServiceProxyFailed as e:
             raise RuntimeError('TF2 service proxy failed') #from e
         transformed_pose = transformed_response.transformed
-        print(transformed_pose)
+        # print(transformed_pose)
         
         g = MoveGroupGoal()
         g.request.start_state.is_diff = True
@@ -205,12 +205,12 @@ class MotionPlanner():
         b = BoundingVolume()
         b.primitives.append(s)
         b.primitive_poses.append(transformed_pose.pose)
-        print(transformed_pose.pose)
+        # print(transformed_pose.pose)
         p1.constraint_region = b
         p1.weight = 1
         c1.position_constraints.append(p1)
 
-        print("ORIENTATION CONTRAINT")
+        # print("ORIENTATION CONTRAINT")
         # locked forward for now
         o1 = OrientationConstraint()
         o1.header.frame_id = WORLD_FRAME
@@ -235,16 +235,15 @@ class MotionPlanner():
 
         self.move_group_action.send_goal(g)
 
-
 class AppleApproach():
     CENTER_THRESH_XY = 0.02
     CAMERA_DEAD_THRESH_Z = 0.3
     DIST_VAR_GOOD_THRESH = .02
     #0.02**2
     STEP_DIST_Z = .05 #0.05
-    STOP_DIST_Z = .12 #.13 (the difference between .12 and .11 seems rather big)
+    STOP_DIST_Z = .18 #.13 #.12 #.13 (the difference between .12 and .11 seems rather big)
     ESTOP_DIST_Z = .1 #0.06
-    PALM_DIST_OFF_Y = .01 #0
+    PALM_DIST_OFF_Y = .01 # estimated position seems to be slightly low, this helps offset
     #-0.017 # TODO: fix from URDF
 
     class State(Enum):
@@ -261,12 +260,17 @@ class AppleApproach():
         self.lock = Lock()
         self.done = False
         self.kal = []
+        self.recentdist = []
 
         self._state_cb_table = {
             AppleApproach.State.IDLE: self.idle_callback,
             AppleApproach.State.CENTER_IN_MOTION: self.center_in_motion_callback,
             AppleApproach.State.APPROACH_IN_MOTION: self.approach_in_motion_callback
         }
+        
+        # log confidences
+        self.confs = []
+        self.estimates = [] #todo
 
     def die(self, msg):
         self.planner.stop()
@@ -286,6 +290,9 @@ class AppleApproach():
                     kal.point = (kal.point[0], kal.point[1] + self.PALM_DIST_OFF_Y, kal.point[2])
                     if type(kal) == PointWithCovarianceStamped:
                         self.kal = kal
+                        self.recentdist.append(kal.point[2])
+                    if type(cam) == RegionOfInterestWithConfidenceStamped:
+                        self.confs.append(cam.confidence)
                 if self.state == AppleApproach.State.DONE:
                     rospy.loginfo(' Approach complete! Terminating...'.format()) #{LOG_PREFIX} Approach complete! Terminating...')
                     rospy.sleep(1)
@@ -307,6 +314,9 @@ class AppleApproach():
             return None
         if type(kal) == PointWithCovarianceStamped:
             self.kal = kal
+            self.recentdist.append(kal.point[2])
+        if type(cam) == RegionOfInterestWithConfidenceStamped:
+            self.confs.append(cam.confidence)
         # If the camera is still useful according to the kalman filter and we need centering
         if kal.point[2] >= AppleApproach.CAMERA_DEAD_THRESH_Z \
             and (abs(kal.point[0]) > AppleApproach.CENTER_THRESH_XY or abs(kal.point[1]) > AppleApproach.CENTER_THRESH_XY):
@@ -319,13 +329,15 @@ class AppleApproach():
             return (AppleApproach.State.CENTER_IN_MOTION, 'centering: {}, {}, {}'.format(kal.point[0], kal.point[1], kal.point[2]))
 
         # if we're close enough, stop
-        if kal.point[2] <= AppleApproach.STOP_DIST_Z:
+        rolling_dist = [sum(self.recentdist[j-6:j])/6 for j in range(6, len(self.recentdist))]
+        if kal and rolling_dist <= AppleApproach.STOP_DIST_Z:
+        #if kal.point[2] <= AppleApproach.STOP_DIST_Z and kal.point[2] > .11: #there's an issue with the ToF sensor where it will return 20 if too far
             return (AppleApproach.State.DONE, 'apple approach complete at distance {}'.format(kal.point[2]))
 
         # otherwise approach the apple slowly
         if kal.covariance[8] > AppleApproach.DIST_VAR_GOOD_THRESH:
             rospy.sleep(.5)
-            self.planner.start_move_to_pose((kal.point[0], kal.point[1], min(kal.point[2] - AppleApproach.STOP_DIST_Z, AppleApproach.STEP_DIST_Z)), MOVE_TOLERANCE)
+            self.planner.start_move_to_pose((kal.point[0], kal.point[1] + 3*AppleApproach.PALM_DIST_OFF_Y, min(kal.point[2] - AppleApproach.STOP_DIST_Z, AppleApproach.STEP_DIST_Z)), MOVE_TOLERANCE) # moves to stop distance or moves step dist, whichever is smaller
             return (AppleApproach.State.APPROACH_IN_MOTION, 'apple is centered: {}, {}, approaching slowly: {}'.format(kal.point[0], kal.point[1], kal.covariance[8]))
         else:
             rospy.sleep(.5)
@@ -350,6 +362,7 @@ class AppleApproach():
     def approach_in_motion_callback(self, kal, cam, dist): #Optional[PointWithCovarianceStamped], cam: Optional[RegionOfInterestWithConfidenceStamped], dist: Optional[Range]):
         if type(kal) == PointWithCovarianceStamped:
             self.kal = kal
+            self.recentdist.append(kal.point[2])
         # sanity check: if the distance sensor reads under a certain value emergency stop
         if dist and dist.range < AppleApproach.ESTOP_DIST_Z:
             self.die('Detected obstruction at {}'.format(dist.range))
@@ -358,7 +371,9 @@ class AppleApproach():
                 return
 
         # if the filter reads under the threshold, we're done! Better to stop early
-        if kal and kal.point[2] <= AppleApproach.STOP_DIST_Z:
+        rolling_dist = [sum(self.recentdist[j-6:j])/6 for j in range(6, len(self.recentdist))]
+        if kal and rolling_dist <= AppleApproach.STOP_DIST_Z:
+        #if kal and kal.point[2] <= AppleApproach.STOP_DIST_Z and kal.point[2] > .11: #there's an issue with the ToF sensor where it will return 20 if too far
             self.planner.stop()
             return (AppleApproach.State.DONE, 'apple approach complete at distance {}'.format(kal.point[2]))
 
@@ -376,6 +391,13 @@ class AppleApproach():
     def is_done(self):
         with self.lock:
             return self.done
+    
+    def conf_summary(self):
+        print("CONFIDENCES")
+        print(self.confs)
+        max_conf = max(self.confs)
+        avg_conf = sum(self.confs)/len(self.confs)
+        return(max_conf, avg_conf)
 
 
 def main():
@@ -386,15 +408,16 @@ def main():
     approach = AppleApproach(planner)
 
     # the actual apple approach
-    camera = Subscriber('applevision/apple_camera', RegionOfInterestWithConfidenceStamped, queue_size=10)
+    camera = Subscriber('applevision/apple_camera', RegionOfInterestWithConfidenceStamped, queue_size=10) # get camera
     # dist = Subscriber('applevision/apple_dist', Range, queue_size=10)
-    dist = Subscriber('gripper/distance', Range, queue_size=10)
-    kal = Subscriber('applevision/est_apple_pos', PointWithCovarianceStamped, queue_size=10)
+    dist = Subscriber('gripper/distance', Range, queue_size=10) # get distance sensor
+    kal = Subscriber('applevision/est_apple_pos', PointWithCovarianceStamped, queue_size=10) # get estimated apple pos, based off of camera info
     min_tick = SynchronizerMinTick(
         [kal, camera, dist], queue_size=20, slop=SYNC_SLOP, min_tick=SYNC_TICK)
     min_tick.registerCallback(approach.tick_callback)
  
     rospy.spin()
+    
         
     
 if __name__ == '__main__':
