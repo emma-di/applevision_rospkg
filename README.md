@@ -1,8 +1,6 @@
 # Applevision
 
-![Apple Vision Poster used for the 2022 Capstone expo](./readme/ApplevisionPoster.png)
-
-Applevision is a 2022 ECE Capstone team consisting of @cogswatch, @PeterJBloch, and @prototypicalpro. The project abstract is as follows:
+Applevision is a 2022 ECE Capstone team consisting of @cogswatch, @PeterJBloch, and @prototypicalpro. The project is continued by @emma-di in this repository. Recent developments include training a new detection model (YOLOv8) to better deal with occlusion. The project abstract is as follows:
 > In 21st century, there is an increasing demand for labor in the agricultural sector. To address this, many are turning to robotics. Existing agricultural robots involve either expensive computational planning or do not support real-time adjustments to the picking environment. Apple Vision designed a low-cost system that can target and guide the palm of a custom apple grasper to within grabbing distance of an apple. Data is processed in real time and sent to the control system, which attempts to move towards the nearest apple. Changes in the environment lead to retrying the approach.
 
 ## Setup
