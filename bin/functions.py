@@ -23,7 +23,7 @@ def nearby(real, apple):
     heightdiff = abs(real[2]-apple[2])
     xdiff = abs(real[0]-apple[0])
     # check is distance is height difference is acceptable
-    if dstance < .15 and heightdiff <.05 and xdiff < .05:
+    if dstance < .16 and heightdiff <.05 and xdiff < .05:
         return True
 
 # convert datetime to PST
@@ -78,4 +78,5 @@ joints = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_j
 # initial = [-3.63, -2.09, 2.15, -.28, .92, 4.57]
 # initial = [-3.79, -2.09, 2.15, -.28, .92, 4.35]
 # initial = [-3.278, -2.16, 1.93, .2046, 1.36, 3.94] #(in degrees: roughly -180, -121, 108, 13, 90, 226)
-initial = [-3.278, -2.16, 1.93, .2046, 1.53, 3.93]
+# initial = [-3.278, -2.16, 1.93, .2046, 1.53, 3.93]
+initial = [-3.19,-2.09,1.93,.205,1.536,3.94] # updated 8/17/23 (centered it)

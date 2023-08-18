@@ -11,7 +11,7 @@ from ultralytics import YOLO
 import time
 import numpy as np
 
-CONFIDENCE_THRESH = 0.7
+CONFIDENCE_THRESH = 0.75
 CLASESS_YOLO = ['Green Apple', 'Red Apple'] # we don't actually use green apple, I just didn't want to retrain
 
 def format_yolov8(

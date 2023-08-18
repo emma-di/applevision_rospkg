@@ -95,7 +95,7 @@ def apple_approach(approach):
         rospy.sleep(1)
         # a small problem: sometimes it takes too long to terminate & starts running again too early
         if approach.is_done() == True:
-            return
+            return 
             
     # loops through given number of times
 def loop_approach():
@@ -111,12 +111,13 @@ def loop_approach():
     # go to home position
     planner.moveToJointPosition(joints, initial)
     planner.start_move_to_pose((0,0,0), .03)
+    # comment out 116-119 to stop sending to random start coords
     # stage 2 testing is seeing if it can approach from various starting positions
-    startcoords = [(random.random()-0.5)/5, (random.random()-0.5)/5]
-    Start_Coords.append(startcoords)
-    print("start pos: " + str(startcoords))
-    planner.start_move_to_pose((startcoords[0],startcoords[1], 0), .03)
-    rospy.sleep(2.5)
+    # startcoords = [(random.random()-0.5)/5, (random.random()-0.5)/5]
+    # Start_Coords.append(startcoords)
+    # print("start pos: " + str(startcoords))
+    # planner.start_move_to_pose((startcoords[0],startcoords[1], 0), .03)
+    rospy.sleep(4)
 
     # approach the apple (and log how long it takes)
     approach1 = AppleApproach(planner)
@@ -127,13 +128,15 @@ def loop_approach():
     Approach_Times.append(approach_time)
     
     # record conf data
-    approach1.conf_summary
-    # (max_conf, avg_conf) = approach1.conf_summary
-    # Max_Conf.append(max_conf)
-    # Avg_Conf.append(avg_conf)
+    #approach1.conf_summary
+    max_conf, avg_conf = approach1.conf_summary()
+    Max_Conf.append(max_conf)
+    Avg_Conf.append(avg_conf)
     
     # stop everything
     # ensure that is is stopped (sometimes it gets stuck)
+    planner.stop()
+    rospy.sleep(10)
     planner.stop()
     rospy.sleep(10)
     planner.stop()
@@ -174,7 +177,7 @@ def loop_approach():
             
 for x in range(int(runs)):
     loop_approach()
-    Trials.append(x)
+    Trials.append(x+1)
 
 #TODO: make a function for this
 # calculate success

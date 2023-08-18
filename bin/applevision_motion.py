@@ -241,9 +241,9 @@ class AppleApproach():
     DIST_VAR_GOOD_THRESH = .02
     #0.02**2
     STEP_DIST_Z = .05 #0.05
-    STOP_DIST_Z = .18 #.13 #.12 #.13 (the difference between .12 and .11 seems rather big)
-    ESTOP_DIST_Z = .1 #0.06
-    PALM_DIST_OFF_Y = .01 # estimated position seems to be slightly low, this helps offset
+    STOP_DIST_Z = .16 # Alejo said 10 cm is sufficient #.13 #.12 #.13 (the difference between .12 and .11 seems rather big) # from /gripper/distance to kal.point[2], it's off by .4
+    ESTOP_DIST_Z = 0.06
+    PALM_DIST_OFF_Y = .005 # estimated position seems to be slightly low, this helps offset
     #-0.017 # TODO: fix from URDF
 
     class State(Enum):
@@ -290,9 +290,13 @@ class AppleApproach():
                     kal.point = (kal.point[0], kal.point[1] + self.PALM_DIST_OFF_Y, kal.point[2])
                     if type(kal) == PointWithCovarianceStamped:
                         self.kal = kal
-                        self.recentdist.append(kal.point[2])
+                        if kal:
+                            if kal.point[2] > .07:
+                                self.recentdist.append(kal.point[2])
                     if type(cam) == RegionOfInterestWithConfidenceStamped:
                         self.confs.append(cam.confidence)
+                        print('CONFIDENCE')
+                        print(cam.confidence)
                 if self.state == AppleApproach.State.DONE:
                     rospy.loginfo(' Approach complete! Terminating...'.format()) #{LOG_PREFIX} Approach complete! Terminating...')
                     rospy.sleep(1)
@@ -314,11 +318,21 @@ class AppleApproach():
             return None
         if type(kal) == PointWithCovarianceStamped:
             self.kal = kal
-            self.recentdist.append(kal.point[2])
+            if kal:
+                if kal.point[2] > .07:
+                    self.recentdist.append(kal.point[2])
         if type(cam) == RegionOfInterestWithConfidenceStamped:
             self.confs.append(cam.confidence)
+            print('CONFIDENCE')
+            print(cam.confidence)
+        rolling_dist = sum(self.recentdist[(len(self.recentdist)-4):len(self.recentdist)])/4
+        if len(self.recentdist) < 4:
+            rolling_dist = .3 #rolling_dist=sum(self.recentdist)/len(self.recentdist)
+        print(self.recentdist)
+        print('ROLLING DIST: ')
+        print(rolling_dist)
         # If the camera is still useful according to the kalman filter and we need centering
-        if kal.point[2] >= AppleApproach.CAMERA_DEAD_THRESH_Z \
+        if rolling_dist >= AppleApproach.CAMERA_DEAD_THRESH_Z \
             and (abs(kal.point[0]) > AppleApproach.CENTER_THRESH_XY or abs(kal.point[1]) > AppleApproach.CENTER_THRESH_XY):
             # we need a bounding box to continue, otherwise the filter has only a guess
             if not cam.w:
@@ -329,7 +343,6 @@ class AppleApproach():
             return (AppleApproach.State.CENTER_IN_MOTION, 'centering: {}, {}, {}'.format(kal.point[0], kal.point[1], kal.point[2]))
 
         # if we're close enough, stop
-        rolling_dist = [sum(self.recentdist[j-6:j])/6 for j in range(6, len(self.recentdist))]
         if kal and rolling_dist <= AppleApproach.STOP_DIST_Z:
         #if kal.point[2] <= AppleApproach.STOP_DIST_Z and kal.point[2] > .11: #there's an issue with the ToF sensor where it will return 20 if too far
             return (AppleApproach.State.DONE, 'apple approach complete at distance {}'.format(kal.point[2]))
@@ -337,11 +350,11 @@ class AppleApproach():
         # otherwise approach the apple slowly
         if kal.covariance[8] > AppleApproach.DIST_VAR_GOOD_THRESH:
             rospy.sleep(.5)
-            self.planner.start_move_to_pose((kal.point[0], kal.point[1] + 3*AppleApproach.PALM_DIST_OFF_Y, min(kal.point[2] - AppleApproach.STOP_DIST_Z, AppleApproach.STEP_DIST_Z)), MOVE_TOLERANCE) # moves to stop distance or moves step dist, whichever is smaller
+            self.planner.start_move_to_pose((kal.point[0], kal.point[1] + 3*AppleApproach.PALM_DIST_OFF_Y, min(rolling_dist - AppleApproach.STOP_DIST_Z, AppleApproach.STEP_DIST_Z)), MOVE_TOLERANCE) # moves to stop distance or moves step dist, whichever is smaller
             return (AppleApproach.State.APPROACH_IN_MOTION, 'apple is centered: {}, {}, approaching slowly: {}'.format(kal.point[0], kal.point[1], kal.covariance[8]))
         else:
             rospy.sleep(.5)
-            self.planner.start_move_to_pose((kal.point[0], kal.point[1], kal.point[2] - AppleApproach.STOP_DIST_Z), MOVE_TOLERANCE)
+            self.planner.start_move_to_pose((kal.point[0], kal.point[1], rolling_dist - AppleApproach.STOP_DIST_Z), MOVE_TOLERANCE)
             return (AppleApproach.State.APPROACH_IN_MOTION, 'apple is centered: {}, {}, approaching quickly: {}'.format(kal.point[0], kal.point[1], kal.covariance[8]))
 
     def center_in_motion_callback(self, *_):
@@ -362,16 +375,24 @@ class AppleApproach():
     def approach_in_motion_callback(self, kal, cam, dist): #Optional[PointWithCovarianceStamped], cam: Optional[RegionOfInterestWithConfidenceStamped], dist: Optional[Range]):
         if type(kal) == PointWithCovarianceStamped:
             self.kal = kal
-            self.recentdist.append(kal.point[2])
+            if kal:
+                if kal.point[2] > .07:
+                    self.recentdist.append(kal.point[2])
+        rolling_dist = sum(self.recentdist[(len(self.recentdist)-4):len(self.recentdist)])/4
+        if len(self.recentdist) < 4:
+            rolling_dist = .3 #rolling_dist=sum(self.recentdist)/len(self.recentdist)
+        print(self.recentdist)
+        print('ROLLING DIST: ')
+        print(rolling_dist)
         # sanity check: if the distance sensor reads under a certain value emergency stop
-        if dist and dist.range < AppleApproach.ESTOP_DIST_Z:
+        # if dist and dist.range < AppleApproach.ESTOP_DIST_Z:
+        if rolling_dist < AppleApproach.ESTOP_DIST_Z:
             self.die('Detected obstruction at {}'.format(dist.range))
             with self.lock:
                 self.done = True
                 return
 
         # if the filter reads under the threshold, we're done! Better to stop early
-        rolling_dist = [sum(self.recentdist[j-6:j])/6 for j in range(6, len(self.recentdist))]
         if kal and rolling_dist <= AppleApproach.STOP_DIST_Z:
         #if kal and kal.point[2] <= AppleApproach.STOP_DIST_Z and kal.point[2] > .11: #there's an issue with the ToF sensor where it will return 20 if too far
             self.planner.stop()
