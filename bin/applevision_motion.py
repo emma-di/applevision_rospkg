@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+#todo: work with alejo's code!
 
 #from typing import Optional (removed for python2)
 from enum import Enum #, auto
